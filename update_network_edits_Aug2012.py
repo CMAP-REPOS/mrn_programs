@@ -52,7 +52,7 @@ else:
 # ---------------------------------------------------------------
 # Local variables
 # ---------------------------------------------------------------
-c = "C:\Master_Rail"                            # working directory
+c = "C:\Master_Rail"                            # working directory should not change
 d = string.replace(c, "\\", '\\\\')
 e = d + "\\Temp"
 f = string.replace(c, "\\", '/') + "/Programs"
