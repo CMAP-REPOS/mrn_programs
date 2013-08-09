@@ -8,7 +8,6 @@
 options noxwait;
 
 
-%let hwydir=V:\Secure\Master_Highway\mhn_programs\;               *** Path to collapse routes script;
 %let outfl=oneline.txt;                                                   *** output file for python to process;
 
 *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*;
@@ -58,7 +57,7 @@ data null; infile "&inpath.\Temp\pypath.txt" length=reclen;
   run;
 
 data _null_;
-  command="%bquote(&runpython) &hwydir.\gtfs_collapse_routes.py &inpath.\Output\oneline.txt &inpath.\Output\feed_groups.txt"; call system(command);
+  command="%bquote(&runpython) &inpath.\mrn_programs\gtfs_collapse_routes.py &inpath.\Output\oneline.txt &inpath.\Output\feed_groups.txt"; call system(command);
   command="if exist &inpath.\Temp\pypath.txt (del &inpath.\Temp\pypath.txt /Q)" ; call system(command);
 run;
 

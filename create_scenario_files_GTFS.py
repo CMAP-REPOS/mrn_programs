@@ -61,7 +61,7 @@ arcpy.AddMessage("---> ct_ramp is " + ct_ramp)
 # ---------------------------------------------------------------
 c = "V:\Secure\Master_Rail"                            # working directory
 d = string.replace(c, "\\", '\\\\')
-f = string.replace(c, "\\", '/') + "/Programs"
+f = string.replace(c, "\\", '/') + "/mrn_programs"
 newdir = path + "\\" + scenario
 current = "all_runs"                                   # current routes
 if scenario in ("100","900"):

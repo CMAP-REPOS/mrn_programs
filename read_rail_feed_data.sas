@@ -11,7 +11,6 @@
 
 options noxwait;
 
-%let hwydir=V:\Secure\Master_Highway\;                                       *** path to highway network folder ***;
 %let maxzn=1961;                                    ** highest zone09 POE;
 %let peakst=25200;                                  ** 7:00 AM in seconds;
 %let peakend=32400;                                 ** 9:00 AM in seconds;
@@ -319,13 +318,13 @@ data short(keep=itinerary_a itinerary_b mode); set hold; proc sort nodupkey; by 
       data temp; set short1 nobs=fixobs; call symput('ctafix',left(put(fixobs,8.))); run;
 
       data net1; set mhn(where=(30000<=itinerary_a<=39999 & 30000<=itinerary_b<=39999));
-      %include "&hwydir.Programs\Transit_feed\write_dictionary.sas";
+      %include "&dir.\mrn_programs\write_dictionary.sas";
 
       %do %while (&count le &ctafix);  
           data shrt; set short1(where=(num=&count));
              call symput('a',left(put(itinerary_a,5.))); call symput('b',left(put(itinerary_b,5.))); run;
           data _null_;
-             command="%bquote(&runpython) &hwydir.Programs\Transit_feed\find_shortest_path.py &a &b &dir.\";
+             command="%bquote(&runpython) &dir.\mrn_programs\find_shortest_path.py &a &b &dir.\";
              call system(command);
          %let count=%eval(&count+1);
       %end;
@@ -336,19 +335,19 @@ data short(keep=itinerary_a itinerary_b mode); set hold; proc sort nodupkey; by 
       data temp; set short1 nobs=fixobs; call symput('metrafix',left(put(fixobs,8.))); run;
 
       data net1; set mhn(where=(40000<=itinerary_a<=49999 & 40000<=itinerary_b<=49999));
-      %include "&hwydir.Programs\Transit_feed\write_dictionary.sas";
+      %include "&dir.\mrn_programs\write_dictionary.sas";
 
       %do %while (&count le &metrafix);  
           data shrt; set short1(where=(num=&count));
              call symput('a',left(put(itinerary_a,5.))); call symput('b',left(put(itinerary_b,5.))); run;
           data _null_;
-             command="%bquote(&runpython) &hwydir.Programs\Transit_feed\find_shortest_path.py &a &b &dir.\";
+             command="%bquote(&runpython) &dir.\mrn_programs\find_shortest_path.py &a &b &dir.\";
              call system(command);
          %let count=%eval(&count+1);
       %end;
 
 
-    %include "&hwydir.Programs\Transit_feed\read_path_output.sas";
+    %include "&dir.\mrn_programs\read_path_output.sas";
   %end;
 %mend itinfix;
 %itinfix
