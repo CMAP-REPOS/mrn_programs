@@ -139,7 +139,7 @@ run;
 
 
    *** IF APPLICABLE, PROCESS FUTURE ROUTE ACTION CODES ***; 
-   %if &a2>0 or &a3>0 or &a4>0 or &a5>0 or &a7>0 %then %do; %include "&inpath.\Programs\apply_future_rail_actions.sas"; %end; run;
+   %if &a2>0 or &a3>0 or &a4>0 or &a5>0 or &a7>0 %then %do; %include "&inpath.\mrn_programs\apply_future_rail_actions.sas"; %end; run;
 
  
          * - - - - - - - - - - - - - - - - - *;
@@ -160,7 +160,7 @@ run;
 
     *** COLLAPSE CTA RAIL INTO GENERALIZED SERVICE ***;
   data itinc; set itins(where=(substr(tr_line,1,1)='c'));
-  %include "&inpath.\Programs\collapse_CTA_runs.sas"; run;
+  %include "&inpath.\mrn_programs\collapse_CTA_runs.sas"; run;
 
 
    ** Update Runs **;

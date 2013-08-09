@@ -55,7 +55,7 @@ else:
 c = "V:\Secure\Master_Rail"                            # working directory
 d = string.replace(c, "\\", '\\\\')
 e = d + "\\Temp"
-f = string.replace(c, "\\", '/') + "/Programs"
+f = string.replace(c, "\\", '/') + "/mrn_programs"
 railnet_arc = "railnet_arc"
 railnet_node = "railnet_node"
 railnet_route_rail_lines = "railnet_route_rail_lines"

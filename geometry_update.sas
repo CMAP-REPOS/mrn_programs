@@ -15,10 +15,10 @@
           -> 1 - Call read_rail_spreadsheet.sas to import & format regular spreadsheet rail coding.
           -> 2 - Call read_rail_feed_data.sas to import & format GTFS rail coding.
                  If there are itinerary gaps:
-                    * Master_Highway\Programs\Transit_feed\write_dictionary.sas writes a Python dictionary
+                    * Master_Rail\mrn_programs\write_dictionary.sas writes a Python dictionary
                          of network links and their lengths.
-                    * Master_Highway\Programs\Transit_feed\find_shortest_path.py determines the shortest network path.
-                    * Master_Highway\Programs\Transit_feed\read_path_output.sas updates the itineraries as needed.
+                    * Master_Rail\mrn_programs\find_shortest_path.py determines the shortest network path.
+                    * Master_Rail\mrn_programs\read_path_output.sas updates the itineraries as needed.
           -> 3 - Call itinerary_node_update.sas to insert split-link updates into itineraries and assign temporary node numbers.
 
      - SECTION 4 - Calculates itinerary F_MEAS and T_MEAS values to allow for displaying the data as Route Events.
@@ -160,9 +160,9 @@ run;
 
 %macro choice;
 
-  %if &code=1 %then %do; %include "&dir.\Programs\read_rail_spreadsheet_Apr2012.sas"; %end;    *** call program to import & format spreadsheet rail coding ***;
-  %if &code=2 %then %do; %include "&dir.\Programs\read_rail_feed_data.sas"; %end;              *** call program to import & format GTFS rail coding ***;
-  %if &code=3 %then %do; %include "&dir.\Programs\itinerary_node_update_Aug2012.sas"; %end;    *** call program to insert split-link updates into itineraries ***;  
+  %if &code=1 %then %do; %include "&dir.\mrn_programs\read_rail_spreadsheet_Apr2012.sas"; %end;    *** call program to import & format spreadsheet rail coding ***;
+  %if &code=2 %then %do; %include "&dir.\mrn_programs\read_rail_feed_data.sas"; %end;              *** call program to import & format GTFS rail coding ***;
+  %if &code=3 %then %do; %include "&dir.\mrn_programs\itinerary_node_update_Aug2012.sas"; %end;    *** call program to insert split-link updates into itineraries ***;  
 
 %mend choice;
 %choice

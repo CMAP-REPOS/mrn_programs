@@ -171,13 +171,13 @@ data temp; set sect2 nobs=totobs; call symput('tothold',left(put(totobs,8.))); r
       %if &ctafix>0 %then %do; 
           *** -- SETUP AVAILABLE NETWORK -- ***;
           data net1; set railnet(where=(30000<=itinerary_a<=39999 & 30000<=itinerary_b<=39999));
-          %include "&dir.\Programs\write_dictionary.sas";
+          %include "&dir.\mrn_programs\write_dictionary.sas";
       %end;
       %do %while (&count le &ctafix);  
           data shrt; set short1(where=(num=&count));
              call symput('a',left(put(itin_a,5.))); call symput('b',left(put(itin_b,5.))); run;
           data _null_;
-             command="%bquote(&runpython) &dir.\Programs\find_shortest_path.py &a &b &dir.\";
+             command="%bquote(&runpython) &dir.\mrn_programs\find_shortest_path.py &a &b &dir.\";
              call system(command);
          %let count=%eval(&count+1);
       %end;
@@ -190,19 +190,19 @@ data temp; set sect2 nobs=totobs; call symput('tothold',left(put(totobs,8.))); r
       %if &metrafix>0 %then %do; 
           *** -- SETUP AVAILABLE NETWORK -- ***;
           data net1; set railnet(where=(40000<=itinerary_a<=49999 & 40000<=itinerary_b<=49999));
-          %include "&dir.\Programs\write_dictionary.sas";
+          %include "&dir.\mrn_programs\write_dictionary.sas";
       %end;
       %do %while (&count le &metrafix);  
           data shrt; set short1(where=(num=&count));
              call symput('a',left(put(itin_a,5.))); call symput('b',left(put(itin_b,5.))); run;
           data _null_;
-             command="%bquote(&runpython) &dir.\Programs\find_shortest_path.py &a &b &dir.\";
+             command="%bquote(&runpython) &dir.\mrn_programs\find_shortest_path.py &a &b &dir.\";
              call system(command);
          %let count=%eval(&count+1);
       %end;
 
 
-    %include "&dir.\Programs\read_future_path_output.sas";
+    %include "&dir.\mrn_programs\read_future_path_output.sas";
   %end;
 %mend itinfix;
 %itinfix
