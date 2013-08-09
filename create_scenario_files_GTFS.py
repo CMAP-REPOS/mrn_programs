@@ -59,7 +59,7 @@ arcpy.AddMessage("---> ct_ramp is " + ct_ramp)
 # ---------------------------------------------------------------
 # Local variables
 # ---------------------------------------------------------------
-c = "C:\Master_Rail"                            # working directory
+c = "V:\Secure\Master_Rail"                            # working directory
 d = string.replace(c, "\\", '\\\\')
 f = string.replace(c, "\\", '/') + "/Programs"
 newdir = path + "\\" + scenario
