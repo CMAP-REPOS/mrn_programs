@@ -30,7 +30,7 @@ c = "C:\Master_Rail"                            # working directory
 
 d = string.replace(c, "\\", '\\\\')
 e = d + "\\Temp"
-f = string.replace(c, "\\", '/') + "/Programs"
+f = string.replace(c, "\\", '/') + "/mrn_programs"
 t = date.today()
 x = date.__str__(t)
 x1 = string.replace(x, "-", "")
