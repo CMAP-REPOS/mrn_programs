@@ -1,4 +1,4 @@
-CMAP-REPOS / mrn_programs
+GOTO2040 / mrn_programs
 =======================
 The MRN Programs repository is a collection of (mostly) Python scripts used to administer the [Chicago Metropolitan Agency for Planning (CMAP)](http://www.cmap.illinois.gov)'s Master Rail Network [geodatabase](http://www.esri.com/software/arcgis/geodatabase). This geodatabase is used, in conjunction with the Master Highway Network, to generate travel demand modeling networks, which we use for all of our modeling needs, including [transportation conformity](http://www.cmap.illinois.gov/conformity-analysis).
 
