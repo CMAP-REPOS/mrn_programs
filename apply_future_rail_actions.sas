@@ -15,11 +15,22 @@ filename inrte "&inpath.\Temp\rte_out.txt";
     *** -- APPLY ACTION CODE 3 (NEW STATION) -- ***;
     %if &a3>0 %then %do;
 
+        data __null__;
+            file "&reportpath" mod;
+            put /"### NEW STATIONS &tod ###";
+            
         data rte3; set ftrrte(where=(action=3)); proc sort; by tr_line;
         data limit(keep=tr_line); set rte3;
         data itn3(keep=itin_a itin_b ln new); merge ftritin limit(in=hit); by tr_line; if hit; 
             length ln $3.;
             ln=substr(tr_line,1,3); new=layover;
+            
+        data __null__; merge ftritin rte3(in=hit); by tr_line; if hit;
+            ln=substr(tr_line,1,3);
+            new=layover;
+            file "&reportpath" mod;
+            put "--> " descr ": added new " ln "station at " new "between itin_a = " itin_a "and itin_b = " itin_b;
+            
         proc sort; by ln itin_a itin_b;
 
         data itins; set itins;
@@ -59,12 +70,23 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
     *** -- APPLY ACTION CODE 7 (NEW CONSOLIDATED STATION) -- ***;
     %if &a7>0 %then %do;
-
+    
+        data __null__;
+            file "&reportpath" mod;
+            put /"### NEW CONSOLIDATED STATIONS &tod ###";
+            
         data rte7; set ftrrte(where=(action=7)); proc sort; by tr_line;
         data limit(keep=tr_line); set rte7;
         data itn7(keep=itin_a ln start end new); merge ftritin limit(in=hit); by tr_line; if hit; 
             length ln $3.;
             ln=substr(tr_line,1,3); start=itin_a; end=itin_b; new=layover;
+            
+        data __null__; merge ftritin rte7(in=hit); by tr_line; if hit;
+            ln=substr(tr_line,1,3);
+            new=layover;
+            file "&reportpath" mod;
+            put "--> " descr ": consolidated " ln "stations between itin_a = " itin_a "and itin_b = " itin_b "into new station at " new;
+            
         proc sort; by ln itin_a;
 
         data itins; set itins;
@@ -120,9 +142,19 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
    *** -- APPLY ACTION CODE 4 (LINE EXTENSION) -- ***;
   %if &a4>0 %then %do;
-
+  
+        data __null__;
+            file "&reportpath" mod;
+            put /"### LINE EXTENSIONS &tod ###";
+            
        %let total=0; %let count=1; 
        data rte4; set ftrrte(where=(action=4)); id=_n_;
+       
+        data __null__; set rte4;
+            ln=substr(tr_line,1,3);
+            file "&reportpath" mod;
+            put "--> " descr ": extended " ln;
+            
        data _null_; set rte4 nobs=totobs; call symput('total',left(put(totobs,8.))); run;             ** store number of future lines;
 
        %do %while (&count le &total);                                                                 ** loop through future routes coded;                                       
@@ -198,8 +230,18 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
    *** -- APPLY ACTION CODE 5 (SHIFT TO DIFFERENT CBD STATION) -- ***;
   %if &a5>0 %then %do;
-
+  
+        data __null__;
+            file "&reportpath" mod;
+            put /"### CBD TERMINUS SHIFT &tod ###";
+             
        data rte5; set ftrrte(where=(action=5)); proc sort; by tr_line;
+       
+        data __null__; set rte5;
+            ln = substr(tr_line,1,3);
+            file "&reportpath" mod;
+            put "--> " descr ": shifted " ln "CBD terminus";
+            
        data limit(keep=tr_line); set rte5;
        data itn5(keep=itin_a itin_b ln new nd); merge ftritin limit(in=hit); by tr_line; if hit; 
          length ln $3.; ln=substr(tr_line,1,3); new=layover; nd=it_order;
@@ -218,7 +260,11 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
    *** -- APPLY ACTION CODE 2 (TRAVEL TIME REDUCTION) -- ***;
   %if &a2>0 %then %do;
-
+        
+        data __null__;
+            file "&reportpath" mod;
+            put /"### TRAVEL TIME REDUCTIONS &tod ###";
+            
        %let tot99=0;
        *** Use Geodatabase Route Coding to Apply Changes ***;
        data ftnd(keep=node point_x point_y); set nodes; format point_x 14.6 point_y 14.5;
@@ -235,8 +281,15 @@ filename inrte "&inpath.\Temp\rte_out.txt";
           itin_a=lag(itin_b);
           if link ne l then delete; 
 
-       data frte2(keep=tr_line action); set ftrrte(where=(action=2)); proc sort; by tr_line;
-       data itn2(keep=tr_line trv_time layover); merge ftritin frte2(in=hit); by tr_line; if hit; 
+       data frte2(keep=tr_line action descr); set ftrrte(where=(action=2)); proc sort; by tr_line;
+       data itn2(keep=tr_line trv_time layover); merge ftritin frte2(in=hit); by tr_line; if hit;
+       
+        data __null__; merge ftritin frte2(in=hit); by tr_line; if hit;
+            ln=substr(tr_line,1,3);
+            reduc=trv_time*100;
+            file "&reportpath" mod;
+            put "--> " descr ": reduced " ln "travel time from " itin_a "to " itin_b "by " reduc "percent";
+            
        data allln(keep=ln ly); set itn2(where=(layover='99')); 
           length ln $3.; ln=substr(tr_line,1,3); ly=layover;
            proc sort nodupkey; by ln;

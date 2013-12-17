@@ -22,6 +22,7 @@ ________________________________________________________________________________
 %let sc=%scan(&sysparm,3,$);
 %let ct_ramp=%scan(&sysparm,4,$);
 %let scen=%eval(&sc/100);
+%let reportpath=&outpath.\&scen.00\rail_changes.txt;
 %let maxzone=1961;                                                        *** highest zn09 POE zone number;
 %let dropnode=48007;                                                      *** Exclude South Bend station until zone system expands to include it;
 %let basescen=100;                                                        *** base year scenario;
@@ -29,6 +30,9 @@ ________________________________________________________________________________
 %let tod=0;
 %let a1=0;%let a2=0;%let a3=0;%let a4=0;%let a5=0;%let a7=0;                        *** initialize action code counts;
 
+data __null__;
+    file "&reportpath";
+    put "REPORT OF SCENARIO &sc RAIL CHANGES"/;
 
      *** READ IN RAIL HEADER INFORMATION ***;
   proc import datafile="&inpath.\Temp\temp_route.dbf" out=routes1 replace;
@@ -51,8 +55,17 @@ ________________________________________________________________________________
   data remove; set people_mover(where=(not(scenario ? "&scen")));
   proc sort data=remove; by anode bnode;
   proc sort data=network; by anode bnode;
+
+    data __null__;
+        file "&reportpath" mod;
+        put "### O'HARE PEOPLE MOVER EXTENSION ###";
+
   data network(drop=scenario notes); merge network remove(in=hit); by anode bnode;
       if hit then delete;
+    
+    data __null__; set remove;
+        file "&reportpath" mod;
+        put "--> removed scenario = " scenario "people mover link anode = " anode "bnode = " bnode "from network";
 
 *---------------------------------------------------------------*;
     *** READ IN FUTURE CODING DATA FOR SCENARIOS 200 - 600 ***;
@@ -122,10 +135,20 @@ run;
   
   data routes(rename=(descriptio=descr)); set routes1(where=(&select)); it_order=0; acthdwy=.;
      %if &a1>0 & (&tod=3 or &tod=am) %then %do;
-           *** -- Include Full Future Routes (Action=1) in processing -- ***; 
-            data frte2(drop=actcode); set ftrrte(where=(action=1)); 
+            
+            data __null__;
+                file "&reportpath" mod;
+                put /"### NEW ROUTES &tod ###";
+            
+            *** -- Include Full Future Routes (Action=1) in processing -- ***; 
+            data frte2(drop=actcode); set ftrrte(where=(action=1));
+            
+            data __null__; set frte2;
+                file "&reportpath" mod;
+                put "--> " descr ": added route " tr_line;
+            
             data routes; set routes frte2;
-              proc sort nodupkey; by tr_line;
+            proc sort nodupkey; by tr_line;
 
             data itins1; set itins1 ftritin; proc sort nodupkey; by tr_line it_order;
      %end;
