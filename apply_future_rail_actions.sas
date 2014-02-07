@@ -12,6 +12,35 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
 %macro changes;
 
+    *** -- APPLY ACTION CODE 5 (SHIFT TO DIFFERENT CBD STATION) -- ***;
+    %if &a5>0 %then %do;
+  
+        data __null__;
+            file "&reportpath" mod;
+            put /"### CBD TERMINUS SHIFT &tod ###";
+             
+        data rte5; set ftrrte(where=(action=5)); proc sort; by tr_line;
+        
+        data __null__; set rte5;
+            ln = substr(tr_line,1,3);
+            file "&reportpath" mod;
+            put "--> " descr ": shifted " ln "CBD terminus";
+            
+        data limit(keep=tr_line); set rte5;
+        data itn5(keep=itin_a itin_b ln new nd); merge ftritin limit(in=hit); by tr_line; if hit; 
+            length ln $3.; ln=substr(tr_line,1,3); new=layover; nd=it_order;
+        proc sort; by ln itin_a itin_b;
+
+        data itins; set itins; length ln $3.; ln=substr(tr_line,1,3); proc sort; by ln itin_a itin_b;
+        data itins(drop=ln new nd); merge itins(in=hit) itn5; by ln itin_a itin_b; if hit;
+            if nd=1 then itin_a=new; else if nd=2 then itin_b=new;
+        proc sort; by tr_line it_order;
+
+        data zz5(keep=ln1 act1); set rte5; length ln1 $3.; ln1=substr(tr_line,1,3); rename action=act1;
+        proc append base=rev data=zz5 force;  ** store for revised description;
+
+    %end;
+
     *** -- APPLY ACTION CODE 3 (NEW STATION) -- ***;
     %if &a3>0 %then %do;
 
@@ -24,14 +53,13 @@ filename inrte "&inpath.\Temp\rte_out.txt";
         data itn3(keep=itin_a itin_b ln new); merge ftritin limit(in=hit); by tr_line; if hit; 
             length ln $3.;
             ln=substr(tr_line,1,3); new=layover;
+        proc sort; by ln itin_a itin_b;
             
         data __null__; merge ftritin rte3(in=hit); by tr_line; if hit;
             ln=substr(tr_line,1,3);
             new=layover;
             file "&reportpath" mod;
             put "--> " descr ": added new " ln "station at " new "between itin_a = " itin_a "and itin_b = " itin_b;
-            
-        proc sort; by ln itin_a itin_b;
 
         data itins; set itins;
             length ln $3.;
@@ -227,37 +255,7 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
   %end;
 
-
-   *** -- APPLY ACTION CODE 5 (SHIFT TO DIFFERENT CBD STATION) -- ***;
-  %if &a5>0 %then %do;
   
-        data __null__;
-            file "&reportpath" mod;
-            put /"### CBD TERMINUS SHIFT &tod ###";
-             
-       data rte5; set ftrrte(where=(action=5)); proc sort; by tr_line;
-       
-        data __null__; set rte5;
-            ln = substr(tr_line,1,3);
-            file "&reportpath" mod;
-            put "--> " descr ": shifted " ln "CBD terminus";
-            
-       data limit(keep=tr_line); set rte5;
-       data itn5(keep=itin_a itin_b ln new nd); merge ftritin limit(in=hit); by tr_line; if hit; 
-         length ln $3.; ln=substr(tr_line,1,3); new=layover; nd=it_order;
-          proc sort; by ln itin_a itin_b;
-
-       data itins; set itins; length ln $3.; ln=substr(tr_line,1,3); proc sort; by ln itin_a itin_b;
-       data itins(drop=ln new nd); merge itins(in=hit) itn5; by ln itin_a itin_b; if hit;
-          if nd=1 then itin_a=new; else if nd=2 then itin_b=new;
-           proc sort; by tr_line it_order;
-
-       data zz5(keep=ln1 act1); set rte5; length ln1 $3.; ln1=substr(tr_line,1,3); rename action=act1;
-       proc append base=rev data=zz5 force;  ** store for revised description;
-
-  %end;
-
-
    *** -- APPLY ACTION CODE 2 (TRAVEL TIME REDUCTION) -- ***;
   %if &a2>0 %then %do;
         
@@ -284,12 +282,20 @@ filename inrte "&inpath.\Temp\rte_out.txt";
        data frte2(keep=tr_line action descr); set ftrrte(where=(action=2)); proc sort; by tr_line;
        data itn2(keep=tr_line trv_time layover); merge ftritin frte2(in=hit); by tr_line; if hit;
        
-        data __null__; merge ftritin frte2(in=hit); by tr_line; if hit;
+        data a2rpt; merge ftritin frte2(in=hit); by tr_line; if hit;
+        data __null__; set a2rpt(where=(layover ne '99'));
             ln=substr(tr_line,1,3);
             reduc=trv_time*100;
             file "&reportpath" mod;
             put "--> " descr ": reduced " ln "travel time from " itin_a "to " itin_b "by " reduc "percent";
-            
+        data a2rpt(keep=descr ln reduc); set a2rpt(where=(layover='99'));
+            ln=substr(tr_line,1,3);
+            reduc=trv_time*100;
+        proc sort data=a2rpt nodupkey; by ln;
+        data __null__; set a2rpt;
+            file "&reportpath" mod;
+            put "--> " descr ": reduced " ln "travel time along entire line by " reduc "percent";
+        
        data allln(keep=ln ly); set itn2(where=(layover='99')); 
           length ln $3.; ln=substr(tr_line,1,3); ly=layover;
            proc sort nodupkey; by ln;
