@@ -27,13 +27,22 @@ def write_vertices(in_arcs, out_vertices):    # parameters: (arc feature class [
             f = 0    # feature count
             for row in cursor:    # loop through features
                 arc = row[0]
-                v = 0    # vertex id
+                v1 = 0    # vertex id in direction 1
+                v2 = 1    # vertex id in direction 2
+                for part in arc:
+                    vertex = part.next()
+                    while vertex:
+                        v2 += 1    # count number of vertices
+                        vertex = part.next()
+                    if not vertex:
+                        vertex = part.next
                 for part in arc:    # loop through feature parts
                     vertex = part.next()
                     while vertex:    # loop through vertices
-                        v += 1
-                        vrtxwriter.writerow([row[1], row[2], v, vertex.X, vertex.Y])    # reference for anode-bnode direction
-                        vrtxwriter.writerow([row[2], row[1], v, vertex.X, vertex.Y])    # reference for bnode-anode direction
+                        v1 += 1
+                        v2 -= 1
+                        vrtxwriter.writerow([row[1], row[2], v1, vertex.X, vertex.Y])    # reference for anode-bnode direction
+                        vrtxwriter.writerow([row[2], row[1], v2, vertex.X, vertex.Y])    # reference for bnode-anode direction
                         vertex = part.next()
                     if not vertex:
                         vertex = part.next()
