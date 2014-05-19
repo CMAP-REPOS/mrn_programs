@@ -12,7 +12,7 @@ REM        %3: SAS log file name
 REM        %4: SAS list file name
 REM #################################################
 
-set saspath="C:\Program Files\SAS\SASFoundation\9.2(32-bit)\sas.exe"
+set saspath="C:\Program Files\SASHome\SASFoundation\9.3\sas.exe"
 set saspath1="C:\Program Files\SAS\SASFoundation\9.2\sas.exe"
 
 if not exist %saspath% (set saspath=%saspath1%)
