@@ -76,6 +76,9 @@ data check; merge ver1 (in=hit) mi; by itin_a itin_b; if hit;
      title 'MIS-CODED ANODE-BNODE OR DIRECTIONAL PROBLEM ON THESE LINKS';
 
   *** VERIFY ITINERARY CODING APPROPRIATE FOR ACTION CODE ***;  
+data ver1; set verify(where=(action=1 & ((itin_b>38999 & itin_b<40000) | (itin_b>48999 & itin_b<50000)) & dw_code=0));
+   proc print; title 'BAD DWELL CODE AT JUNCTION FOR ACTION=1';
+
 data ver2; set verify(where=(action=2 & trv_time=0));
    proc print; title 'BAD TRAVEL TIME REDUCTION VALUE FOR ACTION=2';
 
@@ -90,7 +93,6 @@ data ver6; set verify(where=(action=6 & trv_time ne 0));
 
 data ver7; set verify(where=(action=7 & lo=''));
    proc print; title 'NO CONSOLIDATED STATION CODED FOR ACTION=7';
-
 
   *** VERIFY SCENARIO IS CODED ***; 
 data check; set rte(where=(scenario=0)); 
