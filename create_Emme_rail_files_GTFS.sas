@@ -1,5 +1,5 @@
 /* CREATE_EMME_RAIL_FILES_GTFS.SAS
-    Craig Heither & Nick Ferguson, last rev. 06/19/2013
+    Craig Heither & Nick Ferguson, last rev. 08/07/2014
 
 -------------                                                             -------------
    PROGRAM CREATES TIME-OF-DAY RAIL TRANSIT NETWORK BATCHIN FILES. 
@@ -13,6 +13,7 @@
                     types if desired.
         05-09-2012: Logic revised to process updated future route coding procedures.
         06-19-2013: Added logic to choose people mover links.
+		08-07-2014: Added check for stops at junctions before itinerary batchin creation
 
 -------------                                                             -------------
 __________________________________________________________________________________________________________________________  */
@@ -206,6 +207,13 @@ run;
 
 
   data combine; set routes itins; proc sort; by tr_line it_order;
+  
+       * - - - - - - - - - - - - - - - - - - - - - - - - - - *;
+             **VERIFY THAT ITINERARIES DO NOT STOP AT JUNCTIONS**;
+        data check; set combine(where=(((itin_b>38999 & itin_b<40000) | (itin_b>48999 & itin_b<50000)) & dw_code=0));
+            proc print; title "NETWORK &scen.00 ITINERARY SEGMENTS THAT STOP AT A JUNCTION";
+       * - - - - - - - - - - - - - - - - - - - - - - - - - - *;
+  
   data combine; set combine; by tr_line;
     format headway speed trv_time zn_fare best9.2;
     length desc $22 d $9;
@@ -222,13 +230,13 @@ run;
 
      file out1;
      if _n_=1 then put "c RAIL TRANSIT BATCHIN FILE FOR SCENARIO &scen.00 TOD &tod" /
-          "c  &sysdate" / "c us1 holds segment travel time, us2 holds zone fare" / "t lines init";
-     if first.tr_line then put 'a' +0 name +2 mode +2 veh_type +2 headway +2 speed
+          "c &sysdate" / "c us1 holds segment travel time, us2 holds zone fare" / "t lines init";
+     if first.tr_line then put 'a' +1 name +2 mode +2 veh_type +2 headway +2 speed
            +2 desc / +2 'path=no';
-     else if last.tr_line then put +4 itin_a d +1 'ttf=1' +2 'us1=' +0 trv_time +2 'us2=' +0 zn_fare / +4 itin_b +2 'lay=' +0 layover;
-     else if dw_code=1 then put +4 itin_a +7 d +4 'ttf=1' +2 'us1=' +0 trv_time +2 'us2=' +0 zn_fare;
-     else if (layov ne '0' and layov ne '') then put +4 itin_a d +1 'ttf=1' +2 'us1=' +0 trv_time +2 'us2=' +0 zn_fare +2 'lay=' +0 layov;
-     else put +4 itin_a d +1 'ttf=1' +2 'us1=' +0 trv_time +2 'us2=' +0 zn_fare;
+     else if last.tr_line then put +4 d +2 itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare / +15 itin_b +2 'lay=' +0 layover;
+     else if dw_code=1 then put +4 d +4 itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare;
+     else if (layov ne '0' and layov ne '') then put +4 d +2 itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare +2 'lay=' +0 layov;
+     else put +4 d +2 itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare;
 
      %if &scen=9 %then %do;
          proc export data=combine outfile="&outpath.\&scen.00\rail_itinerary_&tod..dbf" dbms=dbf replace;
