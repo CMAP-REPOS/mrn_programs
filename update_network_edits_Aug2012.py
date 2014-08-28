@@ -70,6 +70,7 @@ mrn_gdb = d + "\\mrn.gdb"
 railnet = mrn_gdb + "\\railnet"
 railnd = railnet + "\\railnet_node"
 new_mile_dbf = e + "\\new_mile.dbf"
+deleted_node_dbf = e + "\\deleted_node.dbf"
 test = railnet + "\\test"
 rte_updt = e + "\\rte_updt.dbf"
 t = date.today()
@@ -114,6 +115,8 @@ if os.path.exists(new_node_dbf):
     arcpy.Delete_management(new_node_dbf, "DbaseTable")
 if os.path.exists(new_mile_dbf):
     arcpy.Delete_management(new_mile_dbf, "DbaseTable")
+if os.path.exists(deleted_node_dbf):
+    arcpy.Delete_management(deleted_node_dbf, "DbaseTable")
 if os.path.exists(new_segments_dbf):
     arcpy.Delete_management(new_segments_dbf, "DbaseTable")
 if os.path.exists(rte_updt_dbf):
@@ -266,7 +269,7 @@ for fc in fcs:
         f -= 1
         arcpy.AddMessage("---> Geometry Written for " + str(f) + " Future Routes")
         outFile.close()
-    
+
     ## Run SAS to Update Itineraries ##
     # -- finish set up to run SAS
     y2 = c + "$" + orig_itinerary_dbf + "$X$3$X"
@@ -276,7 +279,7 @@ for fc in fcs:
         arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file2)
         arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file2)
         arcpy.AddMessage("-------------------------------------------------------------------")
-	sys.exit([1])                                     
+	sys.exit([1])                                      
 
 
     ## << Part 3a: Create Routes with Updated Geometry >> ##

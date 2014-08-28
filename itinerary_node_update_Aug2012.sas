@@ -4,7 +4,7 @@
 
 
 filename nwmi "&dir.\Temp\new_mile.dbf";
-
+filename delndf "&dir.\Temp\deleted_node.dbf";
 
 %macro split;
   %if %sysfunc(fexist(nwmi)) %then %do;
@@ -99,7 +99,7 @@ filename nwmi "&dir.\Temp\new_mile.dbf";
 		if first.it_order then do;
 		    itin_b=tempb;
 		    t_meas=round(f_meas+newmile,.01);
-		    trv_time=round(trv_time*(newmile/totmile),.01);
+		    trv_time=round(trv_time*(newmile/totmile),.01); 
 		    layover='';
 		end;
                 else if last.it_order then do;
@@ -145,6 +145,132 @@ filename nwmi "&dir.\Temp\new_mile.dbf";
 %mend split;
 %split
   /* end macro */
+  
+%macro delete_node;
+    %if %sysfunc(fexist(delndf)) %then %do;
+	   
+	    * --> read in deleted node file *;
+        proc import datafile="&dir.\Temp\deleted_node.dbf" dbms=dbf out=delnd replace;
+		
+	    * --> separate routes that need updating from those that do not *;
+	    proc sql noprint; create table x1 as
+	        select tr_line
+	        from good,delnd
+	        where itin_a=node or itin_b=node;
+	    proc freq; tables tr_line / noprint out=match;
+	    proc sort data=good; by tr_line it_order;
+	    data good; merge good match; by tr_line;
+	    data fix(drop=count percent) ok(drop=count percent); set good;
+	        if count>0 then output fix;
+			else output ok;
+		
+		* --> check that general future itinerary coding has already been updated manually *;
+		data check; set fix(where=(indexc(tr_line,"*")>0));
+        proc print; title "DELETED NODES SHOULD BE MANUALLY CODED IN GENERAL FUTURE ITINERARY CODING BEFORE RUNNING TOOL";
+		   
+		* --> update itineraries *;
+		proc sql noprint; create table fix1 as
+		    select *
+			from fix left join delnd on (itin_a=node or itin_b=node);
+		proc sort; by tr_line it_order;
+		
+		%if %index(&origitin,all_runs) %then %do;
+	        data fix1(drop=node label f a z t d); set fix1; by tr_line it_order;
+		        retain f a z t d;
+                if (first.tr_line & itin_a=node) then delete;
+				else if (last.tr_line & itin_b=node) then delete;
+            	else if itin_b=node then do;
+		            f=f_meas;
+					a=itin_a;
+					z=zn_fare;
+					t=trv_time;
+					d=dep_time;
+					delete;
+				end;
+				else if itin_a=node then do;
+				    f_meas=f;
+					itin_a=a;
+					zn_fare=zn_fare+z;
+					trv_time=trv_time+t;
+					dep_time=d;
+				end;
+				
+			data fix1(drop=m t o); set fix1; by tr_line it_order;
+			    retain m t o;
+                if first.tr_line then do;
+				    m=t_meas-f_meas;
+					f_meas=0;
+					t_meas=m;
+					t=t_meas;
+					o=1;
+					it_order=o;
+				end;
+				else do;
+				    m=t_meas-f_meas;
+					f_meas=t;
+					t_meas=f_meas+m;
+					t=t_meas;
+					o=o+1;
+					it_order=o;
+					if last.tr_line then do;
+					    layover='3';
+						dw_code=0;
+					end;
+				end;    
+	    %end;
+  
+		%else %if %index(&origitin,future) %then %do;
+	        data fix1(drop=node label f a z t); set fix1; by tr_line it_order;
+		        retain f a z t;
+                if ((first.tr_line & itin_a=node)||(last.tr_line & itin_b=node)) then delete;
+            	else if itin_b=node then do;
+		            f=f_meas;
+					a=itin_a;
+					z=zn_fare;
+					t=trv_time;
+					delete;
+				end;
+				else if itin_a=node then do;
+				    f_meas=f;
+					itin_a=a;
+					zn_fare=zn_fare+z;
+					trv_time=trv_time+t;
+				end;
+				
+			data fix1(drop=m t o); set fix1; by tr_line it_order;
+			    retain m t o;
+                if first.tr_line then do;
+				    m=t_meas-f_meas;
+					f_meas=0;
+					t_meas=m;
+					t=t_meas;
+					o=1;
+					it_order=o;
+				end;
+				else do;
+				    m=t_meas-f_meas;
+					f_meas=t;
+					t_meas=f_meas+m;
+					t=t_meas;
+					o=o+1;
+					it_order=o;
+					if last.tr_line then do;
+					    layover='3';
+						dw_code=0;
+						dw_time=0.01;
+					end;
+				end;
+		%end;
+				
+		* --> put all itinerary coding back together *;
+		data good; set ok fix1;
+		proc sort; by itin_a itin_b;
+		data goodout; set good;
+		proc sort; by tr_line it_order;
+		proc export data=goodout outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;
+	%end;
+%mend delete_node;
+%delete_node
 
 * - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - *;
 
@@ -158,7 +284,7 @@ filename nwmi "&dir.\Temp\new_mile.dbf";
             infile "&dir.\Temp\rte_out.txt" missover dlm=";";
             input line_num tr_line $ x y m;
         
-        proc import datafile="&dir.\Temp\temp_node.dbf" out=rail_nodes replace;
+        proc import datafile="&dir.\Temp\new_node.dbf" out=rail_nodes replace;
         data rail_nodes(keep=node point_x point_y); set rail_nodes;
         data rail_nodes(drop=point_x point_y); set rail_nodes;
             x=point_x;

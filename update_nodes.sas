@@ -17,6 +17,7 @@
 
 
 %let tot=0;
+%let delndtot=0;
 %let dir=&sysparm;     ***shapefile storage directory;
 
    *** READ IN BEGINNING NODES ***;
@@ -123,5 +124,16 @@ data keepnodes(drop=_type_ _freq_); merge keepnodes (in=hit) c; by node; if hit;
 data final; retain node label pspace pcost ftr_pspace ftr_pcost point_x point_y; set keepnodes;
 
 proc export data=final outfile="&dir.\Temp\new_node.dbf" dbms=dbf replace;
+
+    *** CHECK FOR DELETED NODES ***;
+%macro delndchk;
+    data delnd(keep=node label); merge c(in=hit1) final(in=hit2); by node;
+        if (hit1 & not(hit2));
+	data delndt; set delnd nobs=totobs; call symput('delndtot',left(put(totobs,8.)));run;
+	%if &delndtot>0 %then %do;
+        proc export data=delnd outfile="&dir.\Temp\deleted_node.dbf" dbms=dbf replace;
+	%end;
+%mend delndchk;
+%delndchk
 
 run;
