@@ -82,7 +82,7 @@ proc import out=sec1 datafile="&segfile" dbms=csv replace; getnames=yes; guessin
   if length(line)<20 then ln=line; else ln=substr(line,1,20);
   proc sort; by ln;
  data sec1; set sec1; rename ln=line;
- data sec1; length zone_id_a $3. zone_id_b $3.; set sec1;
+ /*data sec1; length zone_id_a $3. zone_id_b $3.; set sec1;*/
 
  *** IDENTIFY & REMOVE ROUTES WITH ONLY ONE ITINERARY SEGMENT WHERE ITINA=ITINB ***;
 data sec1; set sec1; if line='' then delete;               
@@ -263,7 +263,7 @@ data verify; set section; proc sort; by itinerary_a itinerary_b;
 
 %macro newstationlinks;
     
-    %if %sysfunc(fexist(nwstatin)) & %index(&origitin,all_runs_itin) %then %do;
+    %if &use900='true' & %index(&origitin,all_runs_itin) %then %do;
         
         proc import out=nwstatin1 datafile=nwstatin dbms=csv replace; getnames=yes; guessingrows=15000;
         data nwstalnks(keep=itin_a itin_b); set nwstatin1;
