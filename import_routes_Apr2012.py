@@ -65,6 +65,7 @@ param1 = arcpy.GetParameterAsText(0)
 param2 = arcpy.GetParameterAsText(1)
 param3 = arcpy.GetParameterAsText(2)
 param4 = arcpy.GetParameterAsText(3)
+param5 = arcpy.GetParameterAsText(5)
 
 rail_routes = param4
 railrt = railnet + "\\" + param4
@@ -80,10 +81,10 @@ elif param2 != '' and param3 != '':
     arcpy.AddMessage("---> Transit Feed Input Route File is " + param2 +" ..." )
     arcpy.AddMessage("---> Transit Feed Input Itinerary File is " + param3 +" ..." )
     flag = "2"
-    y = c + "$" + orig_itinerary_dbf + "$" + param2 + "$" + flag + "$" + param3                                   # SAS -sysparm parameters
+    y = c + "$" + orig_itinerary_dbf + "$" + param2 + "$" + flag + "$" + param3 + "$" + param5                                  # SAS -sysparm parameters
 else:
     arcpy.AddMessage("---> You Must Enter the Appropriate Input File(s) to Run this Script!!!" )
-    sys.exit[1]
+    sys.exit([1])
 
 
 ## -- set up to run SAS program --

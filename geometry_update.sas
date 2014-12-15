@@ -33,6 +33,7 @@ ________________________________________________________________________________
 %let rtefile=%scan(&sysparm,3,$);       ***name of spreadsheet for importing new routes or GTFS route file (entire path);
 %let code=%scan(&sysparm,4,$);          ***choice flag for Section 3 processing;
 %let segfile=%scan(&sysparm,5,$);       ***name of GTFS segment file (entire path);
+%let use900=%scan(&sysparm,6,$);        ***use new station itinerary during GTFS import;
 
 
 %let tot=0;
