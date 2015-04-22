@@ -233,7 +233,7 @@ run;
           "c &sysdate" / "c us1 holds segment travel time, us2 holds zone fare" / "t lines init";
      if first.tr_line then put 'a' +1 name +2 mode +2 veh_type +2 headway +2 speed
            +2 desc / +2 'path=no';
-     else if last.tr_line then put +4 d +(10-length(left(trim(d)))) itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare / +15 itin_b +2 'lay=' +0 layover;
+     else if last.tr_line then put +4 d +(10-length(left(trim(d)))) itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare / +4 'dwt=0.01' +3 itin_b +2 'lay=' +0 layover;
      else if (layov ne '0' and layov ne '') then put +4 d +(10-length(left(trim(d)))) itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare +2 'lay=' +0 layov;
      else put +4 d +(10-length(left(trim(d)))) itin_a +2 'ttf=1' +3 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare;
 

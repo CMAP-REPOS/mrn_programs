@@ -269,7 +269,7 @@ for fc in fcs:
         f -= 1
         arcpy.AddMessage("---> Geometry Written for " + str(f) + " Future Routes")
         outFile.close()
-
+    
     ## Run SAS to Update Itineraries ##
     # -- finish set up to run SAS
     y2 = c + "$" + orig_itinerary_dbf + "$X$3$X"
@@ -358,6 +358,11 @@ for fc in fcs:
         arcpy.AddMessage("---> Updating Rail Itinerary Coding")
         arcpy.DeleteRows_management(itinerary)
         arcpy.Append_management(new_segments_dbf, itinerary, "NO_TEST")
+        arcpy.CopyRows_management(itinerary, itinerary + "_temp_reset_oids")
+        arcpy.Delete_management(itinerary)
+        arcpy.CopyRows_management(itinerary + "_temp_reset_oids", itinerary)
+        arcpy.Delete_management(itinerary + "_temp_reset_oids")
+        
     else:
         if moved_link_ends_only:
             arcpy.AddMessage("---> NOTE: No changes were made to itinerary coding.")
