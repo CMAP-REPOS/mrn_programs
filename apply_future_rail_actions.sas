@@ -51,6 +51,8 @@ filename inrte "&inpath.\Temp\rte_out.txt";
         %let tot99=0;
         *** Use Geodatabase Route Coding to Apply Changes ***;
         data ftnd(keep=node point_x point_y); set nodes; format point_x 14.6 point_y 14.5;
+            point_x=round(point_x,.000001);
+            point_y=round(point_y,.00001);
             proc sort; by point_x point_y; 
         data rte2; infile inrte dlm=';' missover;
             format point_x 14.6 point_y 14.5;
