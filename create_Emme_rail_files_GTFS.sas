@@ -195,6 +195,16 @@ run;
   proc sort data=rtec; by tr_line;
   data rtec(drop=hdwy group runs); merge rtec keepc(in=hit); by tr_line; if hit;
     if acthdwy>0 then headway=acthdwy; else headway=hdwy;
+    
+  data rtem;
+    set rtem;
+    if headway=99 then do;
+      if &tod=1 then headway=600;
+      else if &tod=2 or &tod=4 then headway=60;
+      else if &tod=5 then headway=240;
+      else headway=120;
+      end;
+    run;
 
   data routes; set rtec rtem; 
    length ds $20.;
