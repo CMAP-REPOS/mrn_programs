@@ -1,5 +1,5 @@
 /* CREATE_EMME_RAIL_FILES_GTFS.SAS
-    Craig Heither & Nick Ferguson, last rev. 01/08/2016
+    Craig Heither & Nick Ferguson, last rev. 02/01/2016
 
 -------------                                                             -------------
    PROGRAM CREATES TIME-OF-DAY RAIL TRANSIT NETWORK BATCHIN FILES. 
@@ -15,6 +15,7 @@
         06-19-2013: Added logic to choose people mover links.
 		08-07-2014: Added check for stops at junctions before itinerary batchin creation
         01-08-2016: Corrected itinerary batchin formatting
+        02-01-2016: Metra headways coded as '99' are replaced by the TOD period duration.
 
 -------------                                                             -------------
 __________________________________________________________________________________________________________________________  */
