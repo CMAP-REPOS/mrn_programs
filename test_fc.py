@@ -26,7 +26,7 @@ from arcpy import env
 # ---------------------------------------------------------------
 # Local variables
 # ---------------------------------------------------------------
-c = "C:\Secure\Master_Rail"                            # working directory
+c = "C:\Master_Rail"                            # working directory
 
 d = string.replace(c, "\\", '\\\\')
 e = d + "\\Temp"
@@ -110,7 +110,7 @@ arcpy.DeleteField_management(railnet_arc, "node")
 # Update Itineraries if needed
 # ---------------------------------------------------------------
 if os.path.exists(new_mile_dbf):
-    env.workspace = "C:/Secure/Master_Rail/mrn.gdb/railnet"             ## point inside feature dataset
+    env.workspace = "C:/Master_Rail/mrn.gdb/railnet"             ## point inside feature dataset
     fcs = arcpy.ListFeatureClasses('',"arc")
     fcs.remove("railnet_arc")
     i = 0
