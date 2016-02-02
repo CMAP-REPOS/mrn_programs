@@ -52,7 +52,7 @@ else:
 # ---------------------------------------------------------------
 # Local variables
 # ---------------------------------------------------------------
-c = "C:\Secure\Master_Rail"                            # working directory
+c = "C:\Master_Rail"                            # working directory
 d = string.replace(c, "\\", '\\\\')
 e = d + "\\Temp"
 f = string.replace(c, "\\", '/') + "/mrn_programs"
@@ -234,7 +234,7 @@ arcpy.AddMessage("---> Geometry Written for " + str(f) + " Arcs")
 outFile.close()
 
 ## << Part 2: Process Data to Create New Route Geometry >> ##
-env.workspace = "C:/Secure/Master_Rail/mrn.gdb/railnet"             ## point inside feature dataset
+env.workspace = "C:/Master_Rail/mrn.gdb/railnet"             ## point inside feature dataset
 fcs = arcpy.ListFeatureClasses('',"arc")
 fcs.remove("railnet_arc")
 i = 0
