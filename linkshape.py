@@ -1,7 +1,7 @@
 ''' LINKSHAPE.PY
     Nick Ferguson
     Created 07/16/2013
-    Last Revised --/--/----
+    Last Revised 02/25/2016
 
     PURPOSE:
     This module is called by
@@ -9,7 +9,9 @@
     link shape batchin files for each scenario
 
     REVISIONS:
-    -
+    - NRF 02/25/2016: Added a sort to the write_vertices function to solve a batchin problem
+      related to reverse direction vertices being listed in order from last to first. Emme expects
+      them to be ordered from first to last.
     
 ----------------------------------------------------------------------------'''
 # -----------------------------------------------------------------------------
@@ -50,6 +52,16 @@ def write_vertices(in_arcs, out_vertices):    # parameters: (arc feature class [
                 f += 1
 
             arcpy.AddMessage("---> Vertices Written for " + str(f) + " Arcs")
+            
+    with open(out_vertices, 'rb') as vrtxfile:
+        vrtxcsv = csv.reader(vrtxfile, delimiter = ',')
+        for col in (2, 1, 0):
+            vrtxcsv = sorted(vrtxcsv, key = lambda row: int(row[col]))    # results in records sorted by from node, then by to node, then by vertex order
+    
+    with open(out_vertices, 'wb') as vrtxfile:
+        vrtxwriter = csv.writer(vrtxfile)
+        for row in vrtxcsv:
+            vrtxwriter.writerow([row[0], row[1], row[2], row[3], row[4]])    # overwrite vertex file with sorted records
 
 # -----------------------------------------------------------------------------
 # Create Link Shape File
