@@ -18,6 +18,8 @@
 #   06-19-2013: Added code to create temporary copy of people mover table.  #
 #   07-18-2013: Added ability to create link shape file by calling the      #
 #               create function from the linkshape module.                  #
+#   12-20-2016: Updated to use 'all_runs_base' for scenario 200               #
+#               after base year moved to 2015.                            #
 #                                                                           # 
 #############################################################################
 
@@ -64,7 +66,7 @@ d = string.replace(c, "\\", '\\\\')
 f = string.replace(c, "\\", '/') + "/mrn_programs"
 newdir = path + "\\" + scenario
 current = "all_runs"                                   # current routes
-if scenario in ("100","900"):
+if scenario in ("200","900"):
     current = "all_runs_base"                          # base year routes
 future = "future"                                      # future coding
 rail_routes = current

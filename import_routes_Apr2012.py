@@ -234,6 +234,7 @@ if os.path.exists(rte_updt):
             b_row.START = d_row.getValue("start")
             b_row.STRTHOUR = d_row.getValue("strthour")
             b_row.AM_SHARE = d_row.getValue("ampct")
+            b_row.CT_VEH = d_row.getValue("vehicle")
             
         blankcur.updateRow(b_row)
 

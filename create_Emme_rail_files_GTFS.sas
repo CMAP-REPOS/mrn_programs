@@ -16,6 +16,7 @@
 		08-07-2014: Added check for stops at junctions before itinerary batchin creation
         01-08-2016: Corrected itinerary batchin formatting
         02-01-2016: Metra headways coded as '99' are replaced by the TOD period duration.
+        12-20-2016: Updated 'basescen' variable to '200' after base year moved to 2015.
 
 -------------                                                             -------------
 __________________________________________________________________________________________________________________________  */
@@ -28,7 +29,7 @@ ________________________________________________________________________________
 %let reportpath=&outpath.\&scen.00\rail_changes.txt;
 %let maxzone=1961;                                                        *** highest zn09 POE zone number;
 %let dropnode=48007;                                                      *** Exclude South Bend station until zone system expands to include it;
-%let basescen=100;                                                        *** base year scenario;
+%let basescen=200;                                                        *** base year scenario;
 %let counter=1;
 %let tod=0;
 %let a1=0;%let a2=0;%let a3=0;%let a4=0;%let a5=0;%let a7=0;                        *** initialize action code counts;
