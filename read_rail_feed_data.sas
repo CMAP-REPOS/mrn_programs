@@ -82,7 +82,7 @@ proc import out=sec1 datafile="&segfile" dbms=csv replace; getnames=yes; guessin
   if length(line)<20 then ln=line; else ln=substr(line,1,20);
   proc sort; by ln;
  data sec1; set sec1; rename ln=line;
- /*data sec1; length zone_id_a $3. zone_id_b $3.; set sec1;*/
+ data sec1; length zone_id_a $3. zone_id_b $3.; set sec1;
 
  *** IDENTIFY & REMOVE ROUTES WITH ONLY ONE ITINERARY SEGMENT WHERE ITINA=ITINB ***;
 data sec1; set sec1; if line='' then delete;               

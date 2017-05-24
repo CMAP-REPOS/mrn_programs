@@ -337,8 +337,8 @@ run;
 %macro rtes;
 
   %if &code=2 %then %do;                                                                       *** call block for GTFS rail coding ***;
-      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct); 
-          retain newline descr mode type headway speed fdline r_id rln dir term start strthour ampct;
+      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct vehicle); 
+          retain newline descr mode type headway speed fdline r_id rln dir term start strthour ampct vehicle;
 	  set route;
           rename newline=line1 descr=desc1 mode=mode1 type=type1 headway=hdwy1 speed=speed1;
       proc export data=route outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
