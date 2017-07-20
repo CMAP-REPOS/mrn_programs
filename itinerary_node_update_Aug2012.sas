@@ -1,5 +1,9 @@
-*NRF revised 5-30-2017 to use action codes to inform future it_order after split link.;
-
+/*
+NRF 5/30/2017 - corrected future it_order overwrite issue using action codes to inform future it_order after split link.
+NRF 6/2/2017 - corrected error in rebuilding future route geo. was not using node ID of 0 to find coordinates for new node.
+NRF 6/23/2017 - corrected error in rebuiding future route geo. new node coordinates were being used to apply node ids to
+                route geo based on original node coordinates when node is moved. 
+*/
 *================================================================*;
    *** UPDATE ITINERARY TO REFLECT SPLIT LINKS W/ TEMPORARY ANODE-BNODE VALUES (ONLY IF NEW_MILE.DBF EXISTS) ***;
 *================================================================*;
@@ -366,16 +370,18 @@ filename delndf "&dir.\Temp\deleted_node.dbf";
             input line_num tr_line $ x y m;
         
         proc import datafile="&dir.\Temp\new_node.dbf" out=rail_nodes replace;
-        data rail_nodes(keep=node point_x point_y); set rail_nodes;
-        data rail_nodes(drop=point_x point_y); set rail_nodes;
+        data rail_nodes(keep=node point_x point_y point_x0 point_y0); set rail_nodes;
+        data rail_nodes(drop=point_x point_y point_x0 point_y0); set rail_nodes;
             x=point_x;
-	    y=point_y;
+	        y=point_y;
+            x0=point_x0;
+            y0=point_y0;run;
 
 	proc sql noprint;
 	    create table rte_nodes as
-	    select rte_geo.line_num,rte_geo.tr_line,rte_geo.x,rte_geo.y,rte_geo.m,rail_nodes.node
+	    select rte_geo.line_num,rte_geo.tr_line,rail_nodes.x,rail_nodes.y,rte_geo.m,rail_nodes.node
 	    from rte_geo,rail_nodes
-	    where rte_geo.x=rail_nodes.x & rte_geo.y=rail_nodes.y;
+	    where rte_geo.x=rail_nodes.x0 & rte_geo.y=rail_nodes.y0;
 	proc sort data=rte_nodes;
 	    by line_num m;
 
@@ -390,6 +396,8 @@ filename delndf "&dir.\Temp\deleted_node.dbf";
 	        set tmpnode;
 	        itin_a=anode;
 	        itin_b=bnode;
+            if tempa>90000 then itin_a=0;
+            if tempb>90000 then itin_b=0;
 
 	    proc sort data=rte_itin;
 	        by itin_a itin_b;

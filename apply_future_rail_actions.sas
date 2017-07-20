@@ -78,7 +78,7 @@ filename inrte "&inpath.\Temp\rte_out.txt";
         data a2rpt(keep=descr ln reduc); set a2rpt(where=(layover='99'));
             ln=substr(tr_line,1,3);
             reduc=trv_time*100;
-        proc sort data=a2rpt nodupkey; by ln;
+        proc sort data=a2rpt nodupkey; by descr;
         data __null__; set a2rpt;
             file "&reportpath" mod;
             put "--> " descr ": reduced " ln "travel time along entire line by " reduc "percent";

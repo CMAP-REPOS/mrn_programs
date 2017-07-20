@@ -27,6 +27,8 @@
 #   08-07-2012: Revised to iterate through & update all route systems.      #
 #   05-30-2017: revised to pass future route action codes to SAS for        #
 #               processing split links.                                     #
+#   06-23-2017: revised to remove point_x0 and point_y0 fields from final   #
+#               node feature class.                                         #
 #                                                                           #
 #############################################################################
 
@@ -185,6 +187,7 @@ if os.path.exists(sas_list_file):
 arcpy.AddMessage("---> Updating Node Feature Class")
 arcpy.MakeXYEventLayer_management(new_node_dbf, "point_x", "point_y", temp_node_Layer, "PROJCS['NAD_1927_StatePlane_Illinois_East_FIPS_1201',GEOGCS['GCS_North_American_1927',DATUM['D_North_American_1927',SPHEROID['Clarke_1866',6378206.4,294.9786982]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',-88.33333333333333],PARAMETER['Scale_Factor',0.999975],PARAMETER['Latitude_Of_Origin',36.66666666666666],UNIT['Foot_US',0.3048006096012192]];IsHighPrecision")
 arcpy.FeatureClassToFeatureClass_conversion(temp_node_Layer, mrn_gdb, "temp")
+arcpy.DeleteField_management(temp, ["point_x0", "point_y0"])
 arcpy.SelectLayerByAttribute_management(railnet_node, "CLEAR_SELECTION", "")
 arcpy.DeleteRows_management(railnet_node)
 arcpy.Append_management(temp, railnet_node, "TEST", "", "") 
@@ -239,6 +242,7 @@ outFile.close()
 env.workspace = "C:/Master_Rail/mrn.gdb/railnet"             ## point inside feature dataset
 fcs = arcpy.ListFeatureClasses('',"arc")
 fcs.remove("railnet_arc")
+
 i = 0
 for fc in fcs:
     arcpy.AddMessage("---> Updating Geometry for " + fcs[i] + " Route System ...")
@@ -275,7 +279,7 @@ for fc in fcs:
         f -= 1
         arcpy.AddMessage("---> Geometry Written for " + str(f) + " Future Routes")
         outFile.close()
-        
+    
     ## Run SAS to Update Itineraries ##
     # -- finish set up to run SAS
     y2 = c + "$" + orig_itinerary_dbf + "$X$3$X$X$" + orig_future_routes_dbf

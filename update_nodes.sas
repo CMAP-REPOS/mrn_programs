@@ -13,7 +13,9 @@
       3. new nodes due to added link - new XY coordinates will be calculated automatically, will need node number  
       4. new nodes due to split links - extra processing required to determine which node(s) are new because arc
                                         table will show duplicate entries of original link with anode & bnode values.
-  */
+
+    6/23/17 NRF: revised to retain original coordinates (point_x0, point_y0) in new_node.dbf for use when rebuilding route geo.
+*/
 
 
 %let tot=0;
@@ -115,13 +117,13 @@ proc sort data=keepnodes; by node;
 
    *** READ IN CURRENT NODE DATA AND ATTACH ATTRIBUTE DATA TO NEW NODE DATASET ***;
 proc import datafile="&dir.\Temp\temp_node.dbf" out=c replace;
-data c(drop=point_x point_y); set c; proc sort; by node;
+data c(rename=(point_x=point_x0 point_y=point_y0)); set c; proc sort; by node;
 data keepnodes(drop=_type_ _freq_); merge keepnodes (in=hit) c; by node; if hit;
   if pspace=. then pspace=0; if pcost=. then pcost=0;
 
 
    *** RE-ORDER VARIABLES TO MATCH FEATURE CLASS ORDER ***;
-data final; retain node label pspace pcost ftr_pspace ftr_pcost point_x point_y; set keepnodes;
+data final; retain node label pspace pcost ftr_pspace ftr_pcost point_x point_y point_x0 point_y0; set keepnodes;
 
 proc export data=final outfile="&dir.\Temp\new_node.dbf" dbms=dbf replace;
 

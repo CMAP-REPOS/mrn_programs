@@ -29,7 +29,7 @@ ________________________________________________________________________________
 %let reportpath=&outpath.\&scen.00\rail_changes.txt;
 %let maxzone=1961;                                                        *** highest zn09 POE zone number;
 %let dropnode=48007;                                                      *** Exclude South Bend station until zone system expands to include it;
-%let basescen=200;                                                        *** base year scenario;
+%let basescen=100;                                                        *** base year scenario;
 %let counter=1;
 %let tod=0;
 %let a1=0;%let a2=0;%let a3=0;%let a4=0;%let a5=0;%let a7=0;                        *** initialize action code counts;
@@ -72,7 +72,7 @@ data __null__;
         put "--> removed scenario = " scenario "people mover link anode = " anode "bnode = " bnode "from network";
 
 *---------------------------------------------------------------*;
-    *** READ IN FUTURE CODING DATA FOR SCENARIOS 200 - 600 ***;
+    *** READ IN FUTURE CODING DATA FOR SCENARIOS 200 - 700 ***;
 *---------------------------------------------------------------*;
 %macro future;
   %if &sc>&basescen %then %do;
@@ -223,7 +223,7 @@ run;
   
        * - - - - - - - - - - - - - - - - - - - - - - - - - - *;
              **VERIFY THAT ITINERARIES DO NOT STOP AT JUNCTIONS**;
-        data check; set combine(where=(((itin_b>38999 & itin_b<40000) | (itin_b>48999 & itin_b<50000)) & dw_code=0));
+        data check; set combine(where=(((itin_b>39000 & itin_b<40000) | (itin_b>49000 & itin_b<50000)) & dw_code=0));
             proc print; title "NETWORK &scen.00 ITINERARY SEGMENTS THAT STOP AT A JUNCTION";
        * - - - - - - - - - - - - - - - - - - - - - - - - - - *;
   
