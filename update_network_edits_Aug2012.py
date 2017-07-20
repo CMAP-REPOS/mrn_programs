@@ -25,6 +25,10 @@
 #               replaced by more efficient Search and Update cursor code.   #
 #   01-23-2012: y2 variable for cmd2 re-written for new required parameters.#
 #   08-07-2012: Revised to iterate through & update all route systems.      #
+#   05-30-2017: revised to pass future route action codes to SAS for        #
+#               processing split links.                                     #
+#   06-23-2017: revised to remove point_x0 and point_y0 fields from final   #
+#               node feature class.                                         #
 #                                                                           #
 #############################################################################
 
@@ -183,6 +187,7 @@ if os.path.exists(sas_list_file):
 arcpy.AddMessage("---> Updating Node Feature Class")
 arcpy.MakeXYEventLayer_management(new_node_dbf, "point_x", "point_y", temp_node_Layer, "PROJCS['NAD_1927_StatePlane_Illinois_East_FIPS_1201',GEOGCS['GCS_North_American_1927',DATUM['D_North_American_1927',SPHEROID['Clarke_1866',6378206.4,294.9786982]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',-88.33333333333333],PARAMETER['Scale_Factor',0.999975],PARAMETER['Latitude_Of_Origin',36.66666666666666],UNIT['Foot_US',0.3048006096012192]];IsHighPrecision")
 arcpy.FeatureClassToFeatureClass_conversion(temp_node_Layer, mrn_gdb, "temp")
+arcpy.DeleteField_management(temp, ["point_x0", "point_y0"])
 arcpy.SelectLayerByAttribute_management(railnet_node, "CLEAR_SELECTION", "")
 arcpy.DeleteRows_management(railnet_node)
 arcpy.Append_management(temp, railnet_node, "TEST", "", "") 
@@ -237,11 +242,13 @@ outFile.close()
 env.workspace = "V:/Secure/Master_Rail/mrn.gdb/railnet"             ## point inside feature dataset
 fcs = arcpy.ListFeatureClasses('',"arc")
 fcs.remove("railnet_arc")
+
 i = 0
 for fc in fcs:
     arcpy.AddMessage("---> Updating Geometry for " + fcs[i] + " Route System ...")
     itinerary = d + "\\mrn.gdb\\" + fc + "_itin"
     orig_itinerary_dbf = d + "\\" + fc + "_itin_" + x1 + ".dbf"
+    orig_future_routes_dbf = d + "\\future_routes_" + x1 + ".dbf"
     ## Store copy of current itinerary coding for safekeeping ##
     if os.path.exists(orig_itinerary_dbf):
         arcpy.Delete_management(orig_itinerary_dbf, "DbaseTable")
@@ -255,6 +262,9 @@ for fc in fcs:
     arcpy.SelectLayerByAttribute_management(rail_lines, "CLEAR_SELECTION", "")
     arcpy.FeatureClassToFeatureClass_conversion(rail_lines, e, "temp_route.shp", "", "", "")
     if fc == "future":
+        if os.path.exists(orig_future_routes_dbf):
+            arcpy.Delete_management(orig_future_routes_dbf, "DbaseTable")
+        arcpy.TableSelect_analysis(railrt, orig_future_routes_dbf, "\"OBJECTID\" >= 1")
         outFile = open(outRtFl, "w")
         f = 1                                             # row id number
         for row in arcpy.SearchCursor(railrt):            # loop through rows (features)
@@ -272,14 +282,14 @@ for fc in fcs:
     
     ## Run SAS to Update Itineraries ##
     # -- finish set up to run SAS
-    y2 = c + "$" + orig_itinerary_dbf + "$X$3$X"
+    y2 = c + "$" + orig_itinerary_dbf + "$X$3$X$X$" + orig_future_routes_dbf
     cmd2 = [ bat, z2, y2, sas_log_file2, sas_list_file2 ]
     subprocess.call(cmd2)
     if os.path.exists(sas_list_file2):
         arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file2)
         arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file2)
         arcpy.AddMessage("-------------------------------------------------------------------")
-	sys.exit([1])                                      
+        sys.exit([1])                                      
 
 
     ## << Part 3a: Create Routes with Updated Geometry >> ##

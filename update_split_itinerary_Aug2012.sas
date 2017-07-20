@@ -2,6 +2,8 @@
     Craig Heither, revised 08/07/2012
 
    Program updates the values of itin_a and itin_b in the itinerary coding for rail routes whose links have been split.
+   
+   NRF 6/2/2017 - added logic to set dwell code and dwell time in itin as no stop if node ID represents junction.
 
   */
 
@@ -38,6 +40,10 @@ data a(drop=c newc); set a;
 data itin(drop=newa newb); merge x (in=hit) a; by itin_a itin_b; if hit;
   if newa>0 then itin_a=newa;
   if newb>0 then itin_b=newb;
+  if not(index(tr_line,'*')) and (39000<itin_b<40000 or 49000<itin_b<50000) then do;
+      dw_code=1;
+      dw_time=0;
+      end;
    proc sort; by tr_line it_order;
 
    *** RE-ORDER VARIABLES ***;

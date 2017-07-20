@@ -25,7 +25,7 @@
 
      - SECTION 5 - Creates final files for input into geodatabase.
 
-
+    NRF revised 5-30-2017 to take future routes .dbf as parameter.
 __________________________________________________________________________________________________________________________  */
 
 %let dir=%scan(&sysparm,1,$);           ***shapefile storage directory;
@@ -34,6 +34,7 @@ ________________________________________________________________________________
 %let code=%scan(&sysparm,4,$);          ***choice flag for Section 3 processing;
 %let segfile=%scan(&sysparm,5,$);       ***name of GTFS segment file (entire path);
 %let use900=%scan(&sysparm,6,$);        ***use new station itinerary during GTFS import;
+%let origfrts=%scan(&sysparm,7,$);      ***original future routes .dbf file (entire path);
 
 
 %let tot=0;

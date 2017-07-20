@@ -1,3 +1,9 @@
+/*
+NRF 5/30/2017 - corrected future it_order overwrite issue using action codes to inform future it_order after split link.
+NRF 6/2/2017 - corrected error in rebuilding future route geo. was not using node ID of 0 to find coordinates for new node.
+NRF 6/23/2017 - corrected error in rebuiding future route geo. new node coordinates were being used to apply node ids to
+                route geo based on original node coordinates when node is moved. 
+*/
 *================================================================*;
    *** UPDATE ITINERARY TO REFLECT SPLIT LINKS W/ TEMPORARY ANODE-BNODE VALUES (ONLY IF NEW_MILE.DBF EXISTS) ***;
 *================================================================*;
@@ -123,14 +129,93 @@ filename delndf "&dir.\Temp\deleted_node.dbf";
        * --> put all itinerary coding back together *;
        proc summary nway data=fix1; class tr_line it_order; output out=y1; 
        data fix; merge fix y1 (in=hit); by tr_line it_order; if hit then delete; 
-       data good(drop=_type_ _freq_ it_order); set ok fix fix1; proc sort; by tr_line f_meas; 
-       data good; set good; group=lag(tr_line);
-       data good(drop=group); set good; 
-         retain it_order 1;
-         it_order+1;
-         if tr_line ne group then it_order=1;
-          output;
-         proc sort; by itin_a itin_b;
+       data good(drop=_type_ _freq_ it_order); set ok fix fix1; proc sort; by tr_line f_meas;
+       %if %index(&origitin,future) %then %do;    *rewrite future it_order according to action codes;
+	       proc import datafile="&origfrts" dbms=dbf out=frts replace;
+           proc sort;
+               by tr_line;
+               run;
+	       data actcodes(keep=tr_line action);
+               set frts;
+               run;
+	       data good;
+               merge good(in=hit) actcodes;
+               by tr_line;
+               if hit;
+               run;
+	       data act1 act2 act3;
+               set good;
+               if action in (1,5) then output act1;
+		       else if action=4 then output act2;
+		       else output act3;
+               run;
+	       data act1;
+               set act1;
+               group=lag(tr_line);
+               run;
+           data act1(drop=group);
+               set act1; 
+               retain it_order 1;
+               it_order+1;
+               if tr_line ne group then it_order=1;
+               output;
+               run;
+	       proc sql;
+	           create table y3 as
+		       select tr_line, count(tr_line) as itincnt
+		       from act2
+		       group by tr_line;
+		       quit;
+	       data act2;
+               merge act2(in=hit) y3;
+               by tr_line;
+               if hit;
+               run;
+	       data act2(drop=itincnt n  i);
+               set act2;
+               by tr_line f_meas;
+	           retain n i;
+	           if first.tr_line then do;
+                   n=itincnt;
+			       i=itincnt+(itincnt/2);
+			       end;
+		       if i>n then do;
+                   it_order=n-i;
+			       i=i-1;
+			       end;
+		       if i<n then do;
+		           it_order=(n-i)+1000;
+			       i=i-1;
+			       end;
+			   if i=n then i=i-1;
+		       run;
+		   data act3;
+		       set act3;
+			   it_order=0;
+			   run;
+		   data good(drop=action);
+		       set act1 act2 act3;
+			   run;
+		   proc sort;
+		       by itin_a itin_b;
+			   run;
+		   %end;
+	   %else %do;
+	       data good;
+               set good;
+               group=lag(tr_line);
+			   run;
+           data good(drop=group);
+               set good; 
+               retain it_order 1;
+               it_order+1;
+               if tr_line ne group then it_order=1;
+               output;
+			   run;
+           proc sort;
+               by itin_a itin_b;
+			   run;
+		   %end;
        
 	data goodout;
 	    set good;
@@ -285,16 +370,18 @@ filename delndf "&dir.\Temp\deleted_node.dbf";
             input line_num tr_line $ x y m;
         
         proc import datafile="&dir.\Temp\new_node.dbf" out=rail_nodes replace;
-        data rail_nodes(keep=node point_x point_y); set rail_nodes;
-        data rail_nodes(drop=point_x point_y); set rail_nodes;
+        data rail_nodes(keep=node point_x point_y point_x0 point_y0); set rail_nodes;
+        data rail_nodes(drop=point_x point_y point_x0 point_y0); set rail_nodes;
             x=point_x;
-	    y=point_y;
+	        y=point_y;
+            x0=point_x0;
+            y0=point_y0;run;
 
 	proc sql noprint;
 	    create table rte_nodes as
-	    select rte_geo.line_num,rte_geo.tr_line,rte_geo.x,rte_geo.y,rte_geo.m,rail_nodes.node
+	    select rte_geo.line_num,rte_geo.tr_line,rail_nodes.x,rail_nodes.y,rte_geo.m,rail_nodes.node
 	    from rte_geo,rail_nodes
-	    where rte_geo.x=rail_nodes.x & rte_geo.y=rail_nodes.y;
+	    where rte_geo.x=rail_nodes.x0 & rte_geo.y=rail_nodes.y0;
 	proc sort data=rte_nodes;
 	    by line_num m;
 
@@ -309,6 +396,8 @@ filename delndf "&dir.\Temp\deleted_node.dbf";
 	        set tmpnode;
 	        itin_a=anode;
 	        itin_b=bnode;
+            if tempa>90000 then itin_a=0;
+            if tempb>90000 then itin_b=0;
 
 	    proc sort data=rte_itin;
 	        by itin_a itin_b;

@@ -33,14 +33,15 @@ arcpy.OverwriteOutput = 1
 
 ##======================================================================##
 
-## scenario options: beginning with c10q3 
+## scenario options: beginning with c17q3
 ## --------------------------------------
-##            100 - 2010 network
-##            200 - 2015 network
-##            300 - 2020 network
-##            400 - 2025 network 
-##            500 - 2030 network
+##            100 - 2015 network
+##            200 - 2020 network
+##            300 - 2025 network
+##            400 - 2030 network 
+##            500 - 2035 network
 ##            600 - 2040 network
+##            700 - 2050 network
 
 ##======================================================================##
 
@@ -66,7 +67,7 @@ d = string.replace(c, "\\", '\\\\')
 f = string.replace(c, "\\", '/') + "/mrn_programs"
 newdir = path + "\\" + scenario
 current = "all_runs"                                   # current routes
-if scenario in ("200","900"):
+if scenario in ("100","900"):
     current = "all_runs_base"                          # base year routes
 future = "future"                                      # future coding
 rail_routes = current
