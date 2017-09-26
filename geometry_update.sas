@@ -26,6 +26,7 @@
      - SECTION 5 - Creates final files for input into geodatabase.
 
     NRF revised 5-30-2017 to take future routes .dbf as parameter.
+    NRF 8/21/2017: Includes new future coding TOD field in output.
 __________________________________________________________________________________________________________________________  */
 
 %let dir=%scan(&sysparm,1,$);           ***shapefile storage directory;
@@ -349,10 +350,10 @@ run;
 	  set rt;
 	  id=_n_;
 	  if descriptio='' then descriptio=description;
-          rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 scenario=scen1 action=action1 notes=notes1; 
+          rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 tod=tod1 scenario=scen1 action=action1 notes=notes1; 
       data rt;
 	  set rt;
-	  keep line1 desc1 mode1 type1 hdwy1 speed1 scen1 action1 notes1 id; 
+	  keep line1 desc1 mode1 type1 hdwy1 speed1 tod1 scen1 action1 notes1 id; 
       proc export data=rt outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
   %end;
   %else %if &code=3 & %index(&origitin,all_runs) %then %do;

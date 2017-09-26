@@ -1,36 +1,35 @@
-#############################################################################
-# UPDATE_NETWORK_EDITS_AUG2012.PY                                           #
-#  Craig Heither, last revised 08/07/2012                                   #
-#                                                                           #
-#    This program updates the location of rail network nodes after any of   # 
-#    the following edits have been made to the arcs:                        #
-#         - arcs deleted,                                                   #
-#         - existing arc ends moved,                                        #
-#         - new arcs digitized or                                           #
-#         - existing arcs split (no more than 2 splits per link at 1 time). #
-#                                                                           #
-#    It also re-builds all routes based on the arc geometry to ensure they  #
-#    are coincident with the underlying links. Additionally, the itinerary  #
-#    table coding is updated to remove the segments of routes that have     #
-#    been deleted from the route feature class.                             #
-#                                                                           #
-#                        -------------------------                          #
-#  revision summary:                                                        #
-#   05-18-2010: topology validation dropped from script.                    #
-#   06-03-2010: added coding to update route geometry when run.             #
-#   09-14-2010: updated for ArcMap 10 (arcgisscripting replaced by arcpy &  #
-#               revised cursor coding based on ESRI changes).               #
-#   04-05-2011: SAS call moved to sasrun.bat.                               #
-#   09-26-2011: For Route table update: Index and Table join procedures     #
-#               replaced by more efficient Search and Update cursor code.   #
-#   01-23-2012: y2 variable for cmd2 re-written for new required parameters.#
-#   08-07-2012: Revised to iterate through & update all route systems.      #
-#   05-30-2017: revised to pass future route action codes to SAS for        #
-#               processing split links.                                     #
-#   06-23-2017: revised to remove point_x0 and point_y0 fields from final   #
-#               node feature class.                                         #
-#                                                                           #
-#############################################################################
+###############################################################################
+# UPDATE_NETWORK_EDITS.PY                                                     #
+# Craig Heither                                                               #
+# Last revised 6/23/2017                                                      #
+#                                                                             #
+# This program updates the location of rail network nodes after any of        #
+# the following edits have been made to the arcs:                             #
+#     - arcs deleted,                                                         #
+#     - existing arc ends moved,                                              #
+#     - new arcs digitized or                                                 #
+#     - existing arcs split (no more than 2 splits per link at 1 time).       #
+#                                                                             #
+# It also re-builds all routes based on the arc geometry to ensure they       #
+# are coincident with the underlying links. Additionally, the itinerary       #
+# table coding is updated to remove the segments of routes that have          #
+# been deleted from the route feature class.                                  #
+#                        -------------------------                            #
+# Revision summary:                                                           #
+#     05-18-2010: topology validation dropped from script.                    #
+#     06-03-2010: added coding to update route geometry when run.             #
+#     09-14-2010: updated for ArcMap 10 (arcgisscripting replaced by arcpy &  #
+#                 revised cursor coding based on ESRI changes).               #
+#     04-05-2011: SAS call moved to sasrun.bat.                               #
+#     09-26-2011: For Route table update: Index and Table join procedures     #
+#                 replaced by more efficient Search and Update cursor code.   #
+#     01-23-2012: y2 variable for cmd2 re-written for new required parameters.#
+#     08-07-2012: Revised to iterate through & update all route systems.      #
+#     05-30-2017: revised to pass future route action codes to SAS for        #
+#                 processing split links.                                     #
+#     06-23-2017: revised to remove point_x0 and point_y0 fields from final   #
+#                 node feature class.                                         #
+###############################################################################
 
 # ---------------------------------------------------------------
 # Import System Modules

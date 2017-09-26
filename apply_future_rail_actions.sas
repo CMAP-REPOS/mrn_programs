@@ -5,6 +5,8 @@
    PROGRAM APPLIES FUTURE RAIL CODING CHANGES TO ITINERARIES.  CALLED BY  
    CREATE_EMME_RAIL_FILES_GTFS.SAS.
 -------------                                                             -------------
+  
+   NRF 8/29/2017: Revised station consolidation processing to skip future itineraries that already have new station coded.
 __________________________________________________________________________________________________________________________  */
 
 filename inrte "&inpath.\Temp\rte_out.txt";
@@ -180,7 +182,7 @@ filename inrte "&inpath.\Temp\rte_out.txt";
         data rte7; set ftrrte(where=(action=7)); proc sort; by tr_line;
         data limit(keep=tr_line); set rte7;
         data itn7(keep=itin_a ln start end new); merge ftritin limit(in=hit); by tr_line; if hit; 
-            length ln $3.;
+            length ln $3. new 8.;
             ln=substr(tr_line,1,3); start=itin_a; end=itin_b; new=layover;
             
         data __null__; merge ftritin rte7(in=hit); by tr_line; if hit;
@@ -190,6 +192,13 @@ filename inrte "&inpath.\Temp\rte_out.txt";
             put "--> " descr ": consolidated " ln "stations between itin_a = " itin_a "and itin_b = " itin_b "into new station at " new;
             
         proc sort; by ln itin_a;
+        
+        proc sql;
+		    create table skip as
+			select distinct tr_line, 1 as skip
+			from itins left join itn7 on (itins.itin_a=itn7.new or itins.itin_b=itn7.new)
+			where itn7.new > 0;
+			quit;
 
         data itins; set itins;
             length ln $3.;
@@ -197,6 +206,21 @@ filename inrte "&inpath.\Temp\rte_out.txt";
         proc sort; by ln itin_a;
         data itins; merge itins(in=hit) itn7; by ln itin_a; if hit;
         proc sort; by tr_line it_order;
+        
+        data itins;
+            merge itins(in=hit) skip;
+            by tr_line;
+            if hit;
+            run;
+            
+        data itins (drop=skip);    *** remove matches where new station already in future itinerary;
+            set itins;
+			if skip=1 then do;
+			    start=.;
+                end=.;
+                new=.;
+                end;
+            run;
 
         data itins (drop=d); set itins;    *** remove false matches on 2-way routes;
             retain d;
@@ -210,6 +234,8 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 	    flag=f;    *** flag affected links;
 	    if f=1 then t=trv_time+t;    *** sum travel time on affected links;
 	    if itin_b=e and f=1 then do; f=0; new=n; end=e; time=t; t=0; end;
+        
+        
 
         data itins (drop=start end new flag); set itins;    *** replace consolidating station itin with new station itin;
 	    if itin_a=start and flag=1 then itin_b=new;

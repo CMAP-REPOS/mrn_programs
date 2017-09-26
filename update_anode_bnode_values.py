@@ -1,19 +1,18 @@
-#############################################################################
-# UPDATE_ANODE_BNODE_VALUES.PY                                              #
-#  Craig Heither, last revised 08/07/2012                                   #
-#                                                                           #                     
-#    This program updates the values of "Anode" and "Bnode" in the arc      #
-#    table after edits have been made to "Node" in the node table. It also  #
-#    updates the corresponding values in the itinerary table coding.        # 
-#                                                                           #
-#                        -------------------------                          #
-#  revision summary:                                                        #
-#   09-13-2010: updated for ArcMap 10 (arcgisscripting replaced by arcpy).  #
-#   04-05-2011: SAS call moved to sasrun.bat.                               #
-#   09-14-2011: Spatial join of data stopped working; use Identity instead. #
-#   08-07-2012: Revised to iterate through & update all itinerary tables.   #
-#                                                                           #
-#############################################################################
+###############################################################################
+# UPDATE_ANODE_BNODE_VALUES.PY                                                #
+# Craig Heither                                                               #
+# Last revised 8/7/2012                                                       #
+#                                                                             #                     
+# This program updates the values of "Anode" and "Bnode" in the arc           #
+# table after edits have been made to "Node" in the node table. It also       #
+# updates the corresponding values in the itinerary table coding.             #                                                                          #
+#                        -------------------------                            #
+# Revision summary:                                                           #
+#     09-13-2010: updated for ArcMap 10 (arcgisscripting replaced by arcpy).  #
+#     04-05-2011: SAS call moved to sasrun.bat.                               #
+#     09-14-2011: Spatial join of data stopped working; use Identity instead. #
+#     08-07-2012: Revised to iterate through & update all itinerary tables.   #
+###############################################################################
 
 # ---------------------------------------------------------------
 # Import System Modules
