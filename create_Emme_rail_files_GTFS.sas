@@ -4,8 +4,8 @@
 -------------                                                             -------------
    PROGRAM CREATES TIME-OF-DAY RAIL TRANSIT NETWORK BATCHIN FILES. 
 
-     Action=1: Entire itinerary coded. Route and itinerary are appended to base year tables for processing. Assume only apply to
-                 TOD=3 or TOD=am.
+     Action=1: Entire itinerary coded. Route and itinerary are appended to base year tables for processing.
+               Routes and headways are applied to TOD periods according to coding in HEADWAY and TOD fields.
 
 
      Revisions:
@@ -17,6 +17,8 @@
         01-08-2016: Corrected itinerary batchin formatting
         02-01-2016: Metra headways coded as '99' are replaced by the TOD period duration.
         12-20-2016: Updated 'basescen' variable to '200' after base year moved to 2015.
+        NRF 8/23/2017: Added support for updated future coding of additional service (action = 1)
+                       to include appropriate additional service in all TOD periods.
 
 -------------                                                             -------------
 __________________________________________________________________________________________________________________________  */
@@ -78,7 +80,7 @@ data __null__;
   %if &sc>&basescen %then %do;
         proc import datafile="&inpath.\Temp\temp_route_ftr.dbf" out=ftrrte replace;    *** future routes, limited to specified scenario;
         data ftrrte(rename=(descriptio=descr)); set ftrrte(where=(scenario ? "&scen")); 
-           length actcode$2.; actcode=compress('a'||action); it_order=0; acthdwy=headway;
+           length actcode$2.; actcode=compress('a'||action); it_order=0;
             proc sort; by tr_line;
 
         proc freq data=ftrrte noprint; tables actcode / out=ftract;
@@ -138,14 +140,26 @@ run;
 
   
   data routes(rename=(descriptio=descr)); set routes1(where=(&select)); it_order=0; acthdwy=.;
-     %if &a1>0 & (&tod=3 or &tod=am) %then %do;
+     %if &a1>0 %then %do;
             
             data __null__;
                 file "&reportpath" mod;
                 put /"### NEW ROUTES &tod ###";
             
             *** -- Include Full Future Routes (Action=1) in processing -- ***; 
-            data frte2(drop=actcode); set ftrrte(where=(action=1));
+            data frte2(drop=actcode headway c rename=(phdwy=headway));
+                set ftrrte(where=(action=1 and (tod ? "&tod")));
+                c=count(headway,':');
+                if c>0 then c=c+1;
+                if c>0 then do; 
+                    do i=1 to c by 2;
+                        p1=scan(headway,i,':');
+                        h1=scan(headway,i+1,':');
+                        if find(p1,"&tod")>0 then phdwy=input(h1, 8.);
+                        end;
+                    end;
+                else if c=0 then phdwy=input(headway, 8.);
+                acthdwy=phdwy;
             
             data __null__; set frte2;
                 file "&reportpath" mod;
@@ -215,8 +229,18 @@ run;
   data rte(drop=it_order); set routes;
 
   data itins; merge itins rte(in=hit); by tr_line; if hit; proc sort; by tr_line it_order;
-  data itins; set itins(where=(itin_a not in (&dropnode) & itin_b not in (&dropnode))); by tr_line it_order;
-    if last.tr_line then layover='3';
+  data itins;
+      set itins(where=(itin_a not in (&dropnode) & itin_b not in (&dropnode)));
+      by tr_line it_order;
+      retain o 1;
+	  it_order=o;
+	  o=o+1;
+	  if first.tr_line then do;
+          o=1;
+		  it_order=o;
+		  o=o+1;
+		  end;
+      if last.tr_line then layover='3';
 
 
   data combine; set routes itins; proc sort; by tr_line it_order;
