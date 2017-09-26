@@ -1,27 +1,26 @@
-#############################################################################
-# CREATE_SCENARIO_FILES_GTFS.PY                                             #
-#  Craig Heither & Nick Ferguson, last revised 07/18/2013                   #
-#                                                                           # 
-#    This program creates the Emme batchin files needed to model a scenario #
-#    network.  The "Scenario" and "Path" variables are passed to the script #
-#    as arguments from the tool. The following files are created:           #
-#         - rail.itinerary                                                  #
-#         - rail.network                                                    #
-#         - railnode.extatt                                                 #
-#         - railseg.extatt                                                  #
-#                                                                           # 
-#                        -------------------------                          #
-#                                                                           # 
-#  Revision summary:                                                        #
-#   04-26-2012: Revised script & tool so that CT-RAMP output flag is        # 
-#               available to use expanded list of transit vehicle types.    #
-#   06-19-2013: Added code to create temporary copy of people mover table.  #
-#   07-18-2013: Added ability to create link shape file by calling the      #
-#               create function from the linkshape module.                  #
-#   12-20-2016: Updated to use 'all_runs_base' for scenario 200               #
-#               after base year moved to 2015.                            #
-#                                                                           # 
-#############################################################################
+###############################################################################
+# CREATE_EMME_SCENARIO_FILES.PY                                               #
+# Craig Heither                                                               #                                                          #
+# Last revised 6/28/2017                                                      #
+#                                                                             # 
+# This program creates the Emme batchin files needed to model a scenario      #
+# network.  The "Scenario" and "Path" variables are passed to the script      #
+# as arguments from the tool. The following files are created:                #
+#     - rail.itinerary                                                        #
+#     - rail.network                                                          #
+#     - railnode.extatt                                                       #
+#     - railseg.extatt                                                        #
+#                       ------------------------------                        #
+# Revision summary:                                                           #
+#     04-26-2012: Revised script & tool so that CT-RAMP output flag is        # 
+#                 available to use expanded list of transit vehicle types.    #
+#     06-19-2013: Added code to create temporary copy of people mover table.  #
+#     07-18-2013: Added ability to create link shape file by calling the      #
+#                 create function from the linkshape module.                  #
+#     12-20-2016: Updated to use 'all_runs_base' for scenario 200             #
+#                 after base year moved to 2015.                              #
+#     06-28-2017: Updated to use ON TO 2050 scenario codes.                   #
+###############################################################################
 
 # ---------------------------------------------------------------
 # Import System Modules

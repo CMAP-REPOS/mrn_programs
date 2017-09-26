@@ -1,26 +1,26 @@
-#############################################################################
-# IMPORT_ROUTES.PY                                                          #
-#  Craig Heither, last revised 05/17/2012                                   #
-#                                                                           #
-#    This program is used to import new or revised rail route coding into   #
-#    "railnet_route_rail_lines".  The "xls" variable listed below should be #
-#    updated to identify the spreadsheet in the Import\ directory that      #
-#    holds the coding.                                                      # 
-#                                                                           # 
-#    All routes are re-built based on the arc geometry to ensure they are   #
-#    coincident with the underlying links.                                  #
-#                                                                           # 
-#                        -------------------------                          #
-#  revision summary:                                                        #
-#   06-03-2010: added coding to update route geometry when run.             #
-#   09-14-2010: updated for ArcMap 10 (arcgisscripting replaced by arcpy &  #
-#               revised cursor coding based on ESRI changes).               #
-#   04-05-2011: SAS call moved to sasrun.bat.                               #
-#   09-26-2011: For Route table update: Index and Table join procedures     #
-#               replaced by more efficient Search and Update cursor code.   #
-#   01-24-2012: Revised to accept GTFS or spreadsheet coding.
-#                                                                           #
-#############################################################################
+###############################################################################
+# IMPORT_RAIL_CODING.PY                                                       #
+# Craig Heither                                                               #
+# Last revised 8/22/2017                                                      #
+#                                                                             #
+# This program is used to import new or revised rail route coding into        #
+# "railnet_route_rail_lines".  The "xls" variable listed below should be      #
+# updated to identify the spreadsheet in the Import\ directory that           #
+# holds the coding.                                                           # 
+#                                                                             # 
+# All routes are re-built based on the arc geometry to ensure they are        #
+# coincident with the underlying links.                                       #
+#                        -------------------------                            #
+# Revision summary:                                                           #
+#     06-03-2010: added coding to update route geometry when run.             #
+#     09-14-2010: updated for ArcMap 10 (arcgisscripting replaced by arcpy &  #
+#                 revised cursor coding based on ESRI changes).               #
+#     04-05-2011: SAS call moved to sasrun.bat.                               #
+#     09-26-2011: For Route table update: Index and Table join procedures     #
+#                 replaced by more efficient Search and Update cursor code.   #
+#     01-24-2012: Revised to accept GTFS or spreadsheet coding.               #
+#     NRF 8/22/17: Updates new future coding TOD field.                       #
+###############################################################################
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +222,7 @@ if os.path.exists(rte_updt):
         b_row.HEADWAY = d_row.getValue("hdwy1")
         b_row.SPEED = d_row.getValue("speed1")
         if flag == "1":                                          # update variables unique to future rail coding
+            b_row.TOD = string.strip(d_row.getValue("tod1"))
             b_row.SCENARIO = string.strip(d_row.getValue("scen1"))
             b_row.ACTION = d_row.getValue("action1")
             b_row.NOTES = d_row.getValue("notes1")
@@ -266,18 +267,18 @@ else:
 # ---------------------------------------------------------------
 # Cleanup files if needed
 # ---------------------------------------------------------------
-# if os.path.exists(temp_route_shp):
-    # arcpy.Delete_management(temp_route_shp, "ShapeFile")
-# if os.path.exists(new_segments_dbf):
-    # arcpy.Delete_management(new_segments_dbf, "DbaseTable")
-# if os.path.exists(rte_updt):
-    # arcpy.Delete_management(rte_updt, "DbaseTable")
-# if os.path.exists(test):
-    # arcpy.Delete_management(test)
-# if os.path.exists(outFl):
-    # os.remove(outFl)
-# if os.path.exists(infl):
-    # os.remove(infl)
-# if os.path.exists(outRtFl):
-    # os.remove(outRtFl)
+if os.path.exists(temp_route_shp):
+    arcpy.Delete_management(temp_route_shp, "ShapeFile")
+if os.path.exists(new_segments_dbf):
+    arcpy.Delete_management(new_segments_dbf, "DbaseTable")
+if os.path.exists(rte_updt):
+    arcpy.Delete_management(rte_updt, "DbaseTable")
+if os.path.exists(test):
+    arcpy.Delete_management(test)
+if os.path.exists(outFl):
+    os.remove(outFl)
+if os.path.exists(infl):
+    os.remove(infl)
+if os.path.exists(outRtFl):
+    os.remove(outRtFl)
 

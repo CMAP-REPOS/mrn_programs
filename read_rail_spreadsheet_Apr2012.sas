@@ -1,4 +1,8 @@
- 
+/*
+    Revisions
+    ---------
+    NRF 8/29/17: Reads updated future coding that includes new TOD field.
+*/
 
 options noxwait;
 
@@ -35,7 +39,16 @@ filename out4 "&dir.\import\link_dictionary.txt";
 
 
       ** READ IN ROUTE TABLE CODING **;
-proc import out=rte datafile="&rtefile" dbms=xls replace; sheet="header"; getnames=yes;
+proc import out=rte datafile="&rtefile" dbms=xls replace;
+    sheet="header";
+    getnames=yes;
+    run;
+data rte(drop=tod rename=(tod2=tod));
+    set rte;
+    length tod2 $10.;
+    tod2=tod;
+    run;
+
 data rte(drop=i); set rte(where=(tr_line is not null & action>=1));
   tr_line=lowcase(tr_line); 
   description=upcase(compress(description,"'")); len=min(20,length(description)); description=substr(description,1,len);
@@ -54,7 +67,7 @@ data section(drop=layover i); set section(where=(tr_line is not null & order=int
       do i=1 to dim(zero);
        if zero(i)=. then zero(i)=0;
       end;
-  if dw_code=0 then dw_time=0.01; else dw_time=0; 
+  if dw_code=1 then dw_time=0; else dw_time=0.01; 
   trv_time=round(trv_time,.1);
   group=lag(tr_line);
   if layover>0 then lo=put(layover,8.0); else lo='';
@@ -95,7 +108,7 @@ data ver7; set verify(where=(action=7 & lo=''));
    proc print; title 'NO CONSOLIDATED STATION CODED FOR ACTION=7';
 
   *** VERIFY SCENARIO IS CODED ***; 
-data check; set rte(where=(scenario=0)); 
+data check; set rte(where=(scenario='')); 
      proc print; title 'BAD SCENARIO CODING';
 
   *** VERIFY ONLY ONE MODE IS CODED ***; 
@@ -216,7 +229,7 @@ data temp; set sect2 nobs=totobs; call symput('tothold',left(put(totobs,8.))); r
 data sect2(rename=(order=it_order)); set sect2;
 data section(drop=tr_line); set sect1 sect2 sect4; length ln $8.; ln=tr_line;
 data section(rename=(ln=tr_line lo=layover)); set section; proc sort; by tr_line; 
-data rte(drop=tr_line scenario mode); set rte; length ln scen $8. m $1.; ln=tr_line; scen=put(scenario,8.0); m=substr(mode,1,1);
+data rte(drop=tr_line scenario mode); set rte; length ln scen $8. m $1.;  ln=tr_line; scen=put(scenario,8.0); m=substr(mode,1,1);
 data rte(rename=(ln=tr_line scen=scenario m=mode)); set rte;
 
 
