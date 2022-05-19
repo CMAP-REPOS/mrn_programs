@@ -79,7 +79,7 @@ data __null__;
     *** READ IN FUTURE CODING DATA FOR SCENARIOS 200 - 700 ***;
 *---------------------------------------------------------------*;
 %macro future;
-  %if &sc>&basescen %then %do;
+  /*%if &sc>&basescen %then %do;*/
         proc import datafile="&inpath.\Temp\temp_route_ftr.dbf" out=ftrrte replace;    *** future routes, limited to specified scenario;
         data ftrrte(rename=(descriptio=descr)); set ftrrte(where=(scenario ? "&scen")); 
            length actcode$2.; actcode=compress('a'||action); it_order=0;
@@ -97,7 +97,7 @@ data __null__;
         proc import datafile="&inpath.\Temp\temp_arc_ftr.dbf" out=ftrarc replace;      *** future links;
         data network; set network ftrarc; proc sort nodupkey; by anode bnode;          *** add future links to base links;
 
-  %end;
+  /*%end;*/
 %mend future;
 %future
  /* end of macro*/

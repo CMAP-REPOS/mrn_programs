@@ -6,8 +6,8 @@
 # This program is used to import new or revised rail route coding into        #
 # "railnet_route_rail_lines".  The "xls" variable listed below should be      #
 # updated to identify the spreadsheet in the Import\ directory that           #
-# holds the coding.                                                           # 
-#                                                                             # 
+# holds the coding.                                                           #
+#                                                                             #
 # All routes are re-built based on the arc geometry to ensure they are        #
 # coincident with the underlying links.                                       #
 #                        -------------------------                            #
@@ -28,7 +28,7 @@
 # ---------------------------------------------------------------
 # Import System Modules
 # ---------------------------------------------------------------
-import sys, string, os, arcpy, subprocess, time, platform, datetime, fileinput
+import sys, os, arcpy, subprocess, time, platform, datetime, fileinput
 from datetime import date
 from arcpy import env
 arcpy.OverwriteOutput = 1
@@ -38,9 +38,9 @@ arcpy.OverwriteOutput = 1
 # Local variables
 # ---------------------------------------------------------------
 c = "V:\Secure\Master_Rail"                                                                                      # working directory
-d = string.replace(c, "\\", '\\\\')
+d = str.replace(c, "\\", '\\\\')
 e = d + "\\Temp"
-f = string.replace(c, "\\", '/') + "/mrn_programs"
+f = str.replace(c, "\\", '/') + "/mrn_programs"
 rail_test = e
 railnet_arc = "railnet_arc"
 mrn_gdb = d + "\\mrn.gdb"
@@ -48,7 +48,7 @@ railnet = mrn_gdb + "\\railnet"
 Temp = e
 t = date.today()
 x = date.__str__(t)
-x1 = string.replace(x, "-", "")
+x1 = str.replace(x, "-", "")
 new_segments_dbf = e + "\\new_segments.dbf"
 temp_route_shp = e + "\\temp_route.shp"
 outFl = e + "\\geom_out.txt"
@@ -131,7 +131,7 @@ arcpy.FeatureClassToFeatureClass_conversion(rail_routes, e, "temp_route.shp", ""
 
 # ---------------------------------------------------------------
 # Write Current Arc & Route Geometry to Files
-# ---------------------------------------------------------------   
+# ---------------------------------------------------------------
 arcpy.SelectLayerByAttribute_management(railnet_arc, "CLEAR_SELECTION", "")
 outFile = open(outFl, "w")
 
@@ -146,7 +146,7 @@ for row in arcpy.SearchCursor(railnet_arc):       # loop through rows (features)
                 pnt = part.next()
 
     f += 1
-    
+
 f -= 1
 arcpy.AddMessage("---> Geometry Written for " + str(f) + " Arcs")
 outFile.close()
@@ -162,21 +162,21 @@ if param1 != '':
                 pnt = part.next()
                 if not pnt:
                     pnt = part.next()
-        f += 1      
+        f += 1
     f -= 1
     arcpy.AddMessage("---> Geometry Written for " + str(f) + " Future Routes")
     outFile.close()
 
 # ---------------------------------------------------------------
 # Process Data to Create New Route Coding and Update Geometry
-# ---------------------------------------------------------------   
+# ---------------------------------------------------------------
 arcpy.AddMessage("---> Creating Route Coding")
 subprocess.call(cmd)
 if os.path.exists(sas_list_file):
     arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file)
     arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file)
     arcpy.AddMessage("-------------------------------------------------------------------")
-    sys.exit([1])                                     
+    sys.exit([1])
 
 
 # ---------------------------------------------------------------
@@ -191,7 +191,7 @@ if os.path.exists(rte_updt):
 
     ID = -1
     for line in fileinput.input(infl):                           # open geometry file
-        pnt.ID, pnt.X, pnt.Y, pnt.M = string.split(line,";")     # assign point properties
+        pnt.ID, pnt.X, pnt.Y, pnt.M = str.split(line,";")     # assign point properties
         if ID == -1:
             ID = pnt.ID
         if ID != pnt.ID:
@@ -202,7 +202,7 @@ if os.path.exists(rte_updt):
 
         lineArray.add(pnt)
         ID = pnt.ID
-     
+
     feat = cur.newRow()                                          # add last feature
     feat.shape = lineArray
     cur.insertRow(feat)
@@ -210,10 +210,11 @@ if os.path.exists(rte_updt):
     fileinput.close()
     del cur                                                      # delete cursor to remove data locks
 
-    blankcur = arcpy.UpdateCursor(rail_routes) 
-    datacur = arcpy.SearchCursor(rte_updt) 
+    blankcur = arcpy.UpdateCursor(rail_routes)
+    datacur = arcpy.SearchCursor(rte_updt)
     arcpy.AddMessage("---> Updating Rail Line Data")
     for d_row in datacur:
+        #arcpy.AddMessage("'{}', '{}', '{}'".format(d_row.getValue("tipid1"), d_row.getValue("comp1"), d_row.getValue("rspid1")))
         b_row = blankcur.next()
         b_row.TR_LINE = d_row.getValue("line1")
         b_row.DESCRIPTION = d_row.getValue("desc1")
@@ -221,22 +222,28 @@ if os.path.exists(rte_updt):
         b_row.VEH_TYPE = d_row.getValue("type1")
         b_row.HEADWAY = d_row.getValue("hdwy1")
         b_row.SPEED = d_row.getValue("speed1")
-        if flag == "1":                                          # update variables unique to future rail coding
-            b_row.TOD = string.strip(d_row.getValue("tod1"))
-            b_row.SCENARIO = string.strip(d_row.getValue("scen1"))
+        if flag == "1":                                # update variables unique to future rail coding
+            b_row.TOD = str.strip(str(d_row.getValue("tod1")))
+            b_row.SCENARIO = str.strip(str(d_row.getValue("scen1")))
             b_row.ACTION = d_row.getValue("action1")
             b_row.NOTES = d_row.getValue("notes1")
+            b_row.TIP_ID = d_row.getValue("tipid1")
+            if d_row.getValue("comp1") == 0:
+                b_row.COMPLETION_YEAR = None
+            else:
+                b_row.COMPLETION_YEAR = d_row.getValue("comp1")
+            b_row.RSP_ID = d_row.getValue("rspid1")
         elif flag == "2":                                        # update variables unique to all_runs
             b_row.FEEDLINE = d_row.getValue("fdline")
             b_row.ROUTE_ID = d_row.getValue("r_id")
             b_row.LONGNAME = d_row.getValue("rln")
             b_row.DIRECTION = d_row.getValue("dir")
-            b_row.TERMINAL = d_row.getValue("term")            
+            b_row.TERMINAL = d_row.getValue("term")
             b_row.START = d_row.getValue("start")
             b_row.STRTHOUR = d_row.getValue("strthour")
             b_row.AM_SHARE = d_row.getValue("ampct")
             b_row.CT_VEH = d_row.getValue("vehicle")
-            
+
         blankcur.updateRow(b_row)
 
     del blankcur, datacur, b_row, d_row                          # delete cursor to remove data locks
@@ -252,7 +259,7 @@ else:
 
 # ---------------------------------------------------------------
 # Update Itinerary Table
-# ---------------------------------------------------------------   
+# ---------------------------------------------------------------
 if os.path.exists(new_segments_dbf):
     arcpy.AddMessage("---> Updating Rail Itinerary Coding")
     arcpy.DeleteRows_management(itinerary)
@@ -281,4 +288,3 @@ if os.path.exists(infl):
     os.remove(infl)
 if os.path.exists(outRtFl):
     os.remove(outRtFl)
-

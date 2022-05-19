@@ -12,7 +12,7 @@
     - NRF 02/25/2016: Added a sort to the write_vertices function to solve a batchin problem
       related to reverse direction vertices being listed in order from last to first. Emme expects
       them to be ordered from first to last.
-    
+
 ----------------------------------------------------------------------------'''
 # -----------------------------------------------------------------------------
 # Initiate Module
@@ -24,6 +24,7 @@ import arcpy, csv, time
 # -----------------------------------------------------------------------------
 def write_vertices(in_arcs, out_vertices):    # parameters: (arc feature class [str], vertex file path [str])
     with open(out_vertices, 'wb') as vrtxfile:
+    #with open(out_vertices, 'w', newline='') as vrtxfile:
         vrtxwriter = csv.writer(vrtxfile)
         with arcpy.da.SearchCursor(in_arcs, ['SHAPE@','ANODE','BNODE']) as cursor:
             f = 0    # feature count
@@ -52,13 +53,15 @@ def write_vertices(in_arcs, out_vertices):    # parameters: (arc feature class [
                 f += 1
 
             arcpy.AddMessage("---> Vertices Written for " + str(f) + " Arcs")
-            
+
     with open(out_vertices, 'rb') as vrtxfile:
+    #with open(out_vertices, 'r', newline='') as vrtxfile:
         vrtxcsv = csv.reader(vrtxfile, delimiter = ',')
         for col in (2, 1, 0):
             vrtxcsv = sorted(vrtxcsv, key = lambda row: int(row[col]))    # results in records sorted by from node, then by to node, then by vertex order
-    
+
     with open(out_vertices, 'wb') as vrtxfile:
+    #with open(out_vertices, 'w', newline='') as vrtxfile:
         vrtxwriter = csv.writer(vrtxfile)
         for row in vrtxcsv:
             vrtxwriter.writerow([row[0], row[1], row[2], row[3], row[4]])    # overwrite vertex file with sorted records
@@ -75,6 +78,7 @@ def create(in_arcs, in_links, vertices, out_linkshape, scenario):    # parameter
         write_vertices(in_arcs, vertices)
 
         with open(in_links, 'rb') as lnkfile:
+        #with open(in_links, 'r', newline='') as lnkfile:
             lnkreader = csv.reader(lnkfile)
             l = 0    # link counter
             for link in lnkreader:    # loop through scenario links
@@ -82,6 +86,7 @@ def create(in_arcs, in_links, vertices, out_linkshape, scenario):    # parameter
                 tnode = link[1]
                 lnkshpfile.write(' '.join(['r', fnode, tnode]) + '\n')
                 with open(vertices, 'rb') as vrtxfile:
+                #with open(vertices, 'r', newline='') as vrtxfile:
                     vrtxreader = csv.reader(vrtxfile)
                     for vertex in vrtxreader:    # loop through vertices
                         if vertex[0] == fnode and vertex[1] == tnode: # where vertex reference matches link
@@ -89,4 +94,4 @@ def create(in_arcs, in_links, vertices, out_linkshape, scenario):    # parameter
 
                 l += 1
 
-        arcpy.AddMessage("---> Shapes Written for " + str(l) + " Links")                    
+        arcpy.AddMessage("---> Shapes Written for " + str(l) + " Links")

@@ -7,7 +7,7 @@
 options noxwait;
 
 %let hwydir=V:\Secure\Master_Highway\;              *** path to highway network folder ***;
-%let maxzn=1961;                                    ** highest zone09 POE;
+%let maxzn=3632;                                    ** highest zone09 POE;
 %let tothold=0;
 %let ctafix=0;
 %let metrafix=0;
@@ -21,36 +21,42 @@ filename out4 "&dir.\import\link_dictionary.txt";
 
 %macro getdata;
 
-      *** Read in and Format Spreadsheet Coding ***;
-       %if %sysfunc(fexist(innew)) %then %do;
-             ** READ IN CODING FOR RAIL ITINERARIES **;
-            proc import out=section datafile="&rtefile" dbms=xls replace; sheet="itinerary"; getnames=yes; mixed=yes;
-            data section; set section(where=(tr_line is not null)); tr_line=lowcase(tr_line); proc sort; by tr_line order;
-       %end;
-       %else %do;
-         data null;
-           file "&dir.\Temp\rail_path.lst";
-           put "File not found: &rtefile";
-         endsas;
-       %end;
+    *** Read in and Format Spreadsheet Coding ***;
+    %if %sysfunc(fexist(innew)) %then %do;
+        ** READ IN CODING FOR RAIL ITINERARIES **;
+        proc import datafile="&rtefile" out=section dbms=xlsx replace;
+		  sheet="itinerary";
+		  getnames=yes;
+        data section;
+		  set section(where=(tr_line is not null));
+		  tr_line=lowcase(tr_line);
+		proc sort;
+		  by tr_line order;
+    %end;
+    %else %do;
+        data null;
+        file "&dir.\Temp\rail_path.lst";
+        put "File not found: &rtefile";
+        endsas;
+    %end;
+	
 %mend getdata;
 %getdata
-  /* end macro */
+/* end macro */
 
 
       ** READ IN ROUTE TABLE CODING **;
-proc import out=rte datafile="&rtefile" dbms=xls replace;
+proc import out=rte datafile="&rtefile" dbms=xlsx replace;
     sheet="header";
     getnames=yes;
     run;
-data rte(drop=tod rename=(tod2=tod));
-    set rte;
-    length tod2 $10.;
-    tod2=tod;
+data rte(drop=TOD SCENARIO rename=(TOD1=TOD SCENARIO1=SCENARIO)); set rte;
+    TOD1=left(put(TOD,10.));
+    SCENARIO1=left(put(SCENARIO,10.));
     run;
 
 data rte(drop=i); set rte(where=(tr_line is not null & action>=1));
-  tr_line=lowcase(tr_line); 
+  tr_line=lowcase(tr_line);
   description=upcase(compress(description,"'")); len=min(20,length(description)); description=substr(description,1,len);
   notes=upcase(compress(notes,"'")); len=min(30,length(notes)); notes=substr(notes,1,len);
     array zero(*) _numeric_;
@@ -67,7 +73,7 @@ data section(drop=layover i); set section(where=(tr_line is not null & order=int
       do i=1 to dim(zero);
        if zero(i)=. then zero(i)=0;
       end;
-  if dw_code=1 then dw_time=0; else dw_time=0.01; 
+  if dw_code=1 then dw_time=0; else dw_time=0.01;
   trv_time=round(trv_time,.1);
   group=lag(tr_line);
   if layover>0 then lo=put(layover,8.0); else lo='';
@@ -80,15 +86,15 @@ data s; merge s r; by tr_line;
 data check; set s; if r=1 & i=.; proc print; title "Route with no Itinerary";
 data check; set s; if i=1 & r=.; proc print; title "Itinerary with no Header";
 
-  *** VERIFY ITINERARY CODING MATCHES NETWORK LINKS ***;   
+  *** VERIFY ITINERARY CODING MATCHES NETWORK LINKS ***;
 data verify; set section; proc sort; by itin_a itin_b;
 data ver1; set verify(where=(action not in (2,3,6,7)));
 data check; merge ver1 (in=hit) mi; by itin_a itin_b; if hit;
    if miles>0 then delete;
-     proc print; var itin_a itin_b tr_line order; 
+     proc print; var itin_a itin_b tr_line order;
      title 'MIS-CODED ANODE-BNODE OR DIRECTIONAL PROBLEM ON THESE LINKS';
 
-  *** VERIFY ITINERARY CODING APPROPRIATE FOR ACTION CODE ***;  
+  *** VERIFY ITINERARY CODING APPROPRIATE FOR ACTION CODE ***;
 data ver1; set verify(where=(action=1 & ((itin_b>38999 & itin_b<40000) | (itin_b>48999 & itin_b<50000)) & dw_code=0));
    proc print; title 'BAD DWELL CODE AT JUNCTION FOR ACTION=1';
 
@@ -107,12 +113,12 @@ data ver6; set verify(where=(action=6 & trv_time ne 0));
 data ver7; set verify(where=(action=7 & lo=''));
    proc print; title 'NO CONSOLIDATED STATION CODED FOR ACTION=7';
 
-  *** VERIFY SCENARIO IS CODED ***; 
-data check; set rte(where=(scenario='')); 
+  *** VERIFY SCENARIO IS CODED ***;
+data check; set rte(where=(scenario=''));
      proc print; title 'BAD SCENARIO CODING';
 
-  *** VERIFY ONLY ONE MODE IS CODED ***; 
-data check; set rte(where=(length(mode)>1)); 
+  *** VERIFY ONLY ONE MODE IS CODED ***;
+data check; set rte(where=(length(mode)>1));
      proc print; title 'BAD MODE CODING';
 
   ** REPORT LAYOVER PROBLEMS (MAX. OR 2 PER LINE) **;
@@ -127,8 +133,8 @@ data check; set check(where=(count>2));
  *-----------------------------------------*;
  * ##-- Action in (1,5) --##;
  * itinerary segments are coded to actual network links for these action codes ;
-     *** RESET ITINERARY ORDER ***;   
-data sect1; set section(where=(action in (1,5))); 
+     *** RESET ITINERARY ORDER ***;
+data sect1; set section(where=(action in (1,5)));
 data sect1(drop=order); set sect1;
    retain it_order 1;
    it_order+1;
@@ -170,25 +176,25 @@ data temp; set sect2 nobs=totobs; call symput('tothold',left(put(totobs,8.))); r
          command="if exist pypath.txt (del pypath.txt /Q)" ; call system(command);
          command="ftype Python.File >> pypath.txt" ; call system(command);
       data null; infile "pypath.txt" length=reclen;
-         input location $varying254. reclen; 
+         input location $varying254. reclen;
          loc=scan(location,2,'='); goodloc=substr(loc,1,index(loc,'.exe"')+4);
-         call symput('runpython',trim(goodloc)); 
+         call symput('runpython',trim(goodloc));
          run;
       data _null_; command="if exist pypath.txt (del pypath.txt /Q)" ; call system(command);
-      data _null_; command="if exist &dir.\import\short_path.txt (del &dir.\import\short_path.txt /Q)" ; call system(command); 
+      data _null_; command="if exist &dir.\import\short_path.txt (del &dir.\import\short_path.txt /Q)" ; call system(command);
 
       *** -- PROCESS CTA SEGMENTS -- ***;
       data short1(drop=tr_line); set short(where=(substr(tr_line,1,1)='c')); num=_n_;
       data temp; set short1 nobs=fixobs; call symput('ctafix',left(put(fixobs,8.))); run;
-      data railnet(rename=(itin_a=itinerary_a itin_b=itinerary_b miles=mhnmi)); set arcs; base=1; 
+      data railnet(rename=(itin_a=itinerary_a itin_b=itinerary_b miles=mhnmi)); set arcs; base=1;
            proc sort nodupkey; by itinerary_a itinerary_b;
 
-      %if &ctafix>0 %then %do; 
+      %if &ctafix>0 %then %do;
           *** -- SETUP AVAILABLE NETWORK -- ***;
           data net1; set railnet(where=(30000<=itinerary_a<=39999 & 30000<=itinerary_b<=39999));
           %include "&dir.\mrn_programs\write_dictionary.sas";
       %end;
-      %do %while (&count le &ctafix);  
+      %do %while (&count le &ctafix);
           data shrt; set short1(where=(num=&count));
              call symput('a',left(put(itin_a,5.))); call symput('b',left(put(itin_b,5.))); run;
           data _null_;
@@ -202,12 +208,12 @@ data temp; set sect2 nobs=totobs; call symput('tothold',left(put(totobs,8.))); r
       data short1(drop=tr_line); set short(where=(substr(tr_line,1,1)='m')); num=_n_;
       data temp; set short1 nobs=fixobs; call symput('metrafix',left(put(fixobs,8.))); run;
 
-      %if &metrafix>0 %then %do; 
+      %if &metrafix>0 %then %do;
           *** -- SETUP AVAILABLE NETWORK -- ***;
           data net1; set railnet(where=(40000<=itinerary_a<=49999 & 40000<=itinerary_b<=49999));
           %include "&dir.\mrn_programs\write_dictionary.sas";
       %end;
-      %do %while (&count le &metrafix);  
+      %do %while (&count le &metrafix);
           data shrt; set short1(where=(num=&count));
              call symput('a',left(put(itin_a,5.))); call symput('b',left(put(itin_b,5.))); run;
           data _null_;
@@ -228,7 +234,7 @@ data temp; set sect2 nobs=totobs; call symput('tothold',left(put(totobs,8.))); r
   **   (PLUS RENAME VARIABLES AND SET CONSISTENT LENGTHS) **;
 data sect2(rename=(order=it_order)); set sect2;
 data section(drop=tr_line); set sect1 sect2 sect4; length ln $8.; ln=tr_line;
-data section(rename=(ln=tr_line lo=layover)); set section; proc sort; by tr_line; 
+data section(rename=(ln=tr_line lo=layover)); set section; proc sort; by tr_line;
 data rte(drop=tr_line scenario mode); set rte; length ln scen $8. m $1.;  ln=tr_line; scen=put(scenario,8.0); m=substr(mode,1,1);
 data rte(rename=(ln=tr_line scen=scenario m=mode)); set rte;
 
@@ -239,6 +245,6 @@ data rt; merge rt kill (in=hit); by tr_line; if hit then delete;
 data done; set rt;                                                                  *** existing routes that will be re-imported as-is;
    data _null_; set done nobs=totobs; call symput('keeporig',left(put(totobs,8.))); run;
 
-data rt; set rt rte; proc sort; by tr_line; 
+data rt; set rt rte; proc sort; by tr_line;
 proc sort data=good; by tr_line;
 data good; merge good kill (in=hit); by tr_line; if hit then delete;

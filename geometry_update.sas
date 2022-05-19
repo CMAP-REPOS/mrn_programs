@@ -5,7 +5,7 @@
    Program uses arc geometry to re-build rail routes so they are always coincident with arcs. This
    program is called by IMPORT_ROUTES.PY and by UPDATE_NETWORK_EDITS.PY. It:
 
-     - SECTION 1 - Reads a file of arc geometry and attaches the vertex coordinates so they can be used later to 
+     - SECTION 1 - Reads a file of arc geometry and attaches the vertex coordinates so they can be used later to
                    create the itinerary coding that will be coincident with the arcs when the new routes are built
                    in the geodatabase.
 
@@ -63,7 +63,7 @@ data arcs(drop=tid); set arcs;
   retain ord 1;
     ord+1;
     if id ne tid then ord=1;
-    output; 
+    output;
 
    * --> order vertices within links for second direction ... *;
 data a2(drop=c); set arcs(where=(dir=2 and (mode2 ? 'C' or mode2 ? 'M')));
@@ -77,7 +77,7 @@ data a2(drop=tid); set a2;
   retain ord 1;
     ord+1;
     if id ne tid then ord=1;
-    output; 
+    output;
 
    * --> ... and combine for a complete dataset of both directions *;
 data arcs; set arcs a2; proc sort; by itin_a itin_b ord;
@@ -91,11 +91,11 @@ data mi(keep=itin_a itin_b miles); set arcs; proc sort nodupkey; by itin_a itin_
 *================================================================*;
 %macro errorchk;
     %if &code ne 2 %then %do;
-        proc import datafile="&origitin" dbms=dbf out=sec replace;  
+        proc import datafile="&origitin" dbms=dbf out=sec replace;
         proc sort data=sec; by tr_line;
 
 
-        proc import datafile="&dir.\Temp\temp_route.dbf" dbms=dbf out=rt replace;  
+        proc import datafile="&dir.\Temp\temp_route.dbf" dbms=dbf out=rt replace;
         proc sort data=rt; by tr_line;
 
 
@@ -103,13 +103,13 @@ data mi(keep=itin_a itin_b miles); set arcs; proc sort nodupkey; by itin_a itin_
             %if &code=1 %then %do;
                 data r(keep=tr_line action); set rt;    ***only keep action if importing future route coding;
             %end;
-            %else %do; 
+            %else %do;
                 data r(keep=tr_line); set rt;
             %end;
         %mend goodrte;
         %goodrte
         /* end of macro*/
-        run; 
+        run;
 
         * --> verify routes in route and itinerary tables *;
         data good remove; merge sec (in=hit1) r (in=hit2); by tr_line;
@@ -131,16 +131,16 @@ data mi(keep=itin_a itin_b miles); set arcs; proc sort nodupkey; by itin_a itin_
         %mend ordcheck;
         %ordcheck
         /* end of macro*/
-        run; 
+        run;
 
 
         * --> identify routes dropped from coding, if any exist *;
         data t; set remove nobs=totobs; call symput('tot',left(put(totobs,8.))); run;   **store number of dropped routes in global variable;
 
         %macro delroute;
-            %if &tot>0 %then %do;  
+            %if &tot>0 %then %do;
                 data remove(keep=tr_line); set remove; proc sort nodupkey; by tr_line;
-                data print; set remove; file out2; 
+                data print; set remove; file out2;
                     if _n_=1 then put "&sysdate - Routes Deleted from Coding:";
                     put tr_line;
             %end;
@@ -148,15 +148,15 @@ data mi(keep=itin_a itin_b miles); set arcs; proc sort nodupkey; by itin_a itin_
         %delroute
         /* end of macro*/
         run;
-    %end; 
+    %end;
 %mend errorchk;
 %errorchk
 run;
 
 *================================================================*;
  ***SECTION 3. based on input parameter this will call script to
-       1) import spreadsheet coding, 
-       2) read_rail_feed_data or 
+       1) import spreadsheet coding,
+       2) read_rail_feed_data or
        3) update itinerary for split links.
  [these are mutually exclusive categories];
 *================================================================*;
@@ -165,7 +165,7 @@ run;
 
   %if &code=1 %then %do; %include "&dir.\mrn_programs\read_rail_spreadsheet_Apr2012.sas"; %end;    *** call program to import & format spreadsheet rail coding ***;
   %if &code=2 %then %do; %include "&dir.\mrn_programs\read_rail_feed_data.sas"; %end;              *** call program to import & format GTFS rail coding ***;
-  %if &code=3 %then %do; %include "&dir.\mrn_programs\itinerary_node_update_Aug2012.sas"; %end;    *** call program to insert split-link updates into itineraries ***;  
+  %if &code=3 %then %do; %include "&dir.\mrn_programs\itinerary_node_update_Aug2012.sas"; %end;    *** call program to insert split-link updates into itineraries ***;
 
 %mend choice;
 %choice
@@ -181,10 +181,10 @@ run;
 %macro meas(dsn);
 
      *** -- PROCESSING FOR IMPORTING FUTURE ROUTES ONLY -- ***;
-  %if &code=1 %then %do; 
+  %if &code=1 %then %do;
       %if %sysfunc(exist(&dsn)) %then %do;                                                  *** FUTURE CODING WITH ACTION=(2 OR 3) ***;
           data sectmi(drop=tr_line); set sect1 sect4; length ln $8.; ln=tr_line;
-          data sectmi(rename=(ln=tr_line lo=layover)); set sectmi; 
+          data sectmi(rename=(ln=tr_line lo=layover)); set sectmi;
           data sectmi; set sectmi newitin; proc sort; by itin_a itin_b;
       %end;
       %else %do;
@@ -197,7 +197,7 @@ run;
             proc sort; by tr_line it_order;
 
             * --> QC check on itineraries *;
-          data chk; set sec(where=(miles=.)); 
+          data chk; set sec(where=(miles=.));
            if &code=1 then do; if action in (2,3,6,7) then delete; end;
              proc print; title "No Coded Length: Means Link is Not in Network";
 
@@ -208,12 +208,12 @@ run;
              x=x+miles;
 
           data sec(drop=x); set sec;
-            f_meas=x; t_meas=f_meas+miles; 
+            f_meas=x; t_meas=f_meas+miles;
               proc sort; by tr_line it_order f_meas;
-          data sec1(drop=miles); set sec;
+          data sec1(drop=miles); set sec; run;
 
          *** WRITE .DBF OF DATA THAT WILL BE STORED IN GEODATABASE ITINERARY TABLE ***;
-      %if %sysfunc(exist(&dsn)) %then %do; 
+      %if %sysfunc(exist(&dsn)) %then %do;
           data s1(drop=x); set sec1(rename=(DW_TIME=x) where=(action not in (2,3,5,6,7)));    *** NO CHANGES;
               DW_TIME=input(x,13.11);
           data s2; set sec1(where=(action in (2,3,5,6,7)));      *** CONVERT BACK TO SPREADSHEET CODING ***;
@@ -224,11 +224,11 @@ run;
             proc summary nway; class tr_line itin_a itin_b; id layover;
                output out=s2b min(f_meas)= max(t_meas)= sum(order)=it_order mean(trv_time)=;
           data s1(drop=_type_ _freq_ orig_a orig_b orig_lo action group order); set good s1 s2b; proc sort; by tr_line f_meas;
-          proc export data=s1 outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;                    
+          proc export data=s1 outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;
       %end;
       %else %do;
           data sec1(drop=orig_a orig_b orig_lo action group); set good sec1; proc sort; by tr_line f_meas;
-          proc export data=sec1 outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;       
+          proc export data=sec1 outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;
       %end;
    %end;
    %else %if &code=2 %then %do;
@@ -244,9 +244,9 @@ run;
              x=x+miles;
 
           data sec(drop=x); set good;
-            f_meas=x; t_meas=f_meas+miles; 
+            f_meas=x; t_meas=f_meas+miles;
               proc sort; by tr_line it_order f_meas;
-          data sec1(drop=miles); set sec; proc sort; by tr_line f_meas;        
+          data sec1(drop=miles); set sec; proc sort; by tr_line f_meas;
           proc export data=sec1 outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;
    %end;
    %else %if &code=3 %then %do;
@@ -327,7 +327,7 @@ run;
 
    data print; set vert; file out1 dlm=';';
     put rte x y m;
-  
+
   %end;
 
 %mend create_rtes;
@@ -339,7 +339,7 @@ run;
 %macro rtes;
 
   %if &code=2 %then %do;                                                                       *** call block for GTFS rail coding ***;
-      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct vehicle); 
+      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct vehicle);
           retain newline descr mode type headway speed fdline r_id rln dir term start strthour ampct vehicle;
 	  set route;
           rename newline=line1 descr=desc1 mode=mode1 type=type1 headway=hdwy1 speed=speed1;
@@ -350,14 +350,14 @@ run;
 	  set rt;
 	  id=_n_;
 	  if descriptio='' then descriptio=description;
-          rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 tod=tod1 scenario=scen1 action=action1 notes=notes1; 
+          rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 tod=tod1 scenario=scen1 action=action1 notes=notes1 tip_id=tipid1 completion=comp1 rsp_id=rspid1;
       data rt;
 	  set rt;
-	  keep line1 desc1 mode1 type1 hdwy1 speed1 tod1 scen1 action1 notes1 id; 
+	  keep line1 desc1 mode1 type1 hdwy1 speed1 tod1 scen1 action1 notes1 tipid1 comp1 rspid1 id;
       proc export data=rt outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
   %end;
   %else %if &code=3 & %index(&origitin,all_runs) %then %do;
-      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct ct_veh1); 
+      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct ct_veh1);
           retain tr_line descriptio mode veh_type headway speed feedline route_id longname direction terminal start strthour am_share ct_veh;
 	  set rt;
           rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 feedline=fdline route_id=r_id longname=rln direction=dir terminal=term am_share=ampct ct_veh=ct_veh1;

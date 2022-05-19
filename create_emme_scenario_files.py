@@ -2,7 +2,7 @@
 # CREATE_EMME_SCENARIO_FILES.PY                                               #
 # Craig Heither                                                               #                                                          #
 # Last revised 6/28/2017                                                      #
-#                                                                             # 
+#                                                                             #
 # This program creates the Emme batchin files needed to model a scenario      #
 # network.  The "Scenario" and "Path" variables are passed to the script      #
 # as arguments from the tool. The following files are created:                #
@@ -12,7 +12,7 @@
 #     - railseg.extatt                                                        #
 #                       ------------------------------                        #
 # Revision summary:                                                           #
-#     04-26-2012: Revised script & tool so that CT-RAMP output flag is        # 
+#     04-26-2012: Revised script & tool so that CT-RAMP output flag is        #
 #                 available to use expanded list of transit vehicle types.    #
 #     06-19-2013: Added code to create temporary copy of people mover table.  #
 #     07-18-2013: Added ability to create link shape file by calling the      #
@@ -25,21 +25,21 @@
 # ---------------------------------------------------------------
 # Import System Modules
 # ---------------------------------------------------------------
-import sys, string, os, arcpy, subprocess, time, platform, fileinput, linkshape
+import sys, os, arcpy, subprocess, time, platform, fileinput, linkshape
 from arcpy import env
 arcpy.OverwriteOutput = 1
 
 
 ##======================================================================##
 
-## scenario options: beginning with c17q3
+## scenario options: beginning with OT2050 Update/C22Q2
 ## --------------------------------------
-##            100 - 2015 network
-##            200 - 2020 network
-##            300 - 2025 network
-##            400 - 2030 network 
-##            500 - 2035 network
-##            600 - 2040 network
+##            100 - 2019 network
+##            200 - 2025 network
+##            300 - 2030 network
+##            400 - 2035 network
+##            500 - 2040 network
+##            600 - 2045 network
 ##            700 - 2050 network
 
 ##======================================================================##
@@ -62,12 +62,12 @@ arcpy.AddMessage("---> ct_ramp is " + ct_ramp)
 # Local variables
 # ---------------------------------------------------------------
 c = "V:\Secure\Master_Rail"                            # working directory
-d = string.replace(c, "\\", '\\\\')
-f = string.replace(c, "\\", '/') + "/mrn_programs"
+d = str.replace(c, "\\", '\\\\')
+f = str.replace(c, "\\", '/') + "/mrn_programs"
 newdir = path + "\\" + scenario
 current = "all_runs"                                   # current routes
-if scenario in ("100","900"):
-    current = "all_runs_base"                          # base year routes
+#if scenario in ("100","900"):
+#    current = "all_runs_base"                          # base year routes
 future = "future"                                      # future coding
 rail_routes = current
 rail_routes_ftr = future
@@ -98,7 +98,7 @@ z = f + "/" + fl + ".sas"
 y = c + "$" + path + "$" + scenario + "$" + ct_ramp
 sas_log_file = c + "\\Temp\\" + fl + ".log"
 sas_list_file = d + "\\Temp\\" + fl + ".lst"
-cmd = [ bat, z, y, sas_log_file, sas_list_file ] 
+cmd = [ bat, z, y, sas_log_file, sas_list_file ]
 
 
 # ---------------------------------------------------------------
@@ -162,27 +162,27 @@ arcpy.TableSelect_analysis(itinerary, scen_itin_dbf, "\"OBJECTID\" >= 1")
 arcpy.TableSelect_analysis(people_mover, temp_ppl_mvr_dbf, "\"OBJECTID\" >= 1")
 
 ## obtain extra data for future scenarios
-if scenario != "100":
-    arcpy.AddMessage("   * Obtaining Additional Data for Scenario " + scenario + " ...")
-    arcpy.FeatureClassToFeatureClass_conversion(rail_routes_ftr, Temp, "temp_route_ftr.shp", "", "", "")
-    arcpy.SelectLayerByLocation_management(railnet_arc, "SHARE_A_LINE_SEGMENT_WITH", rail_routes_ftr, "", "NEW_SELECTION")
-    arcpy.FeatureClassToFeatureClass_conversion(railnet_arc, Temp, "temp_arc_ftr.shp", "", "", "")
-    arcpy.TableSelect_analysis(itinerary_ftr, ftr_itin_dbf, "\"OBJECTID\" >= 1")
-    ## Write Route Geometry File - Used for Processing Action=2
-    outFile = open(outFl, "w")
-    f = 1                                             # row id number
-    for row in arcpy.SearchCursor(rail_routes_ftr):   # loop through rows (features)
-        for part in row.Shape:                        # loop through feature parts
+#if scenario != "100":
+arcpy.AddMessage("   * Obtaining Additional Data for Scenario " + scenario + " ...")
+arcpy.FeatureClassToFeatureClass_conversion(rail_routes_ftr, Temp, "temp_route_ftr.shp", "", "", "")
+arcpy.SelectLayerByLocation_management(railnet_arc, "SHARE_A_LINE_SEGMENT_WITH", rail_routes_ftr, "", "NEW_SELECTION")
+arcpy.FeatureClassToFeatureClass_conversion(railnet_arc, Temp, "temp_arc_ftr.shp", "", "", "")
+arcpy.TableSelect_analysis(itinerary_ftr, ftr_itin_dbf, "\"OBJECTID\" >= 1")
+## Write Route Geometry File - Used for Processing Action=2
+outFile = open(outFl, "w")
+f = 1                                             # row id number
+for row in arcpy.SearchCursor(rail_routes_ftr):   # loop through rows (features)
+    for part in row.Shape:                        # loop through feature parts
+        pnt = part.next()
+        while pnt:                                # loop through vertices
+            outFile.write(str(f) + ";" + str(row.getValue("TR_LINE")) + ";" + str(row.getValue("ACTION")) + ";" +  str(pnt.X) + ";" + str(pnt.Y) + "\n")
             pnt = part.next()
-            while pnt:                                # loop through vertices
-                outFile.write(str(f) + ";" + str(row.getValue("TR_LINE")) + ";" + str(row.getValue("ACTION")) + ";" +  str(pnt.X) + ";" + str(pnt.Y) + "\n")
+            if not pnt:
                 pnt = part.next()
-                if not pnt:
-                    pnt = part.next()
-        f += 1      
-    f -= 1
-    arcpy.AddMessage("---> Geometry Written for " + str(f) + " Routes")
-    outFile.close()
+    f += 1
+f -= 1
+arcpy.AddMessage("---> Geometry Written for " + str(f) + " Routes")
+outFile.close()
 
 
 ## Create Storage Folder if it does not exist
@@ -200,7 +200,7 @@ if os.path.exists(sas_list_file):
     arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file)
     arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file)
     arcpy.AddMessage("-------------------------------------------------------------------")
-    sys.exit([1])       
+    sys.exit([1])
 
 ## create linkshape file
 arcpy.SelectLayerByAttribute_management(railnet_arc, 'CLEAR_SELECTION')
