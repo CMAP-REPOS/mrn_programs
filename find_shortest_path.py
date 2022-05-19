@@ -1,7 +1,7 @@
 ###############################################################################
 # FIND_SHORTEST_PATH.PY                                                       #
 #  Craig Heither, rev. 07-24-2012                                             #
-#                                                                             # 
+#                                                                             #
 #  This script finds the shortest path between two nodes, given the available #
 #  network. The source of the shortest path function is:                      #
 #      http://rebrained.com/?p=392 (accessed September 2011) - author unknown #
@@ -18,21 +18,21 @@
 # ---------------------------------------------------------------
 # Import System Modules and Set Variables.
 # ---------------------------------------------------------------
-import sys, os, string, csv
+import sys, os, csv
 
-input = sys.argv[3] + "Import\\link_dictionary.txt"             ## input file with distance dictionary
-short = sys.argv[3] + "Import\\short_path.txt"                  ## shortest path output file
+input = os.path.join(sys.argv[3], "Import\\link_dictionary.txt")            ## input file with distance dictionary
+short = os.path.join(sys.argv[3], "Import\\short_path.txt")                  ## shortest path output file
 sys.setrecursionlimit(6000)                                     ## max. times function will call itself (default=1000)
 ##======================================================================##
 
 # ---------------------------------------------------------------
-# 
-# ---------------------------------------------------------------    
+#
+# ---------------------------------------------------------------
 graph={}
 reader = csv.reader(open(input), delimiter='$')
 for row in reader:
     graph[eval(row[0])]=eval(row[1])    ### assigns key (first object in row [0]) & value (2nd object in row [1]) pair
-                                        ### eval function converts from string to integers 
+                                        ### eval function converts from string to integers
 
 
 ## function written by unknown author to find shortest path between 2 nodes in a graph; implementation of Dijkstra's algorithm
@@ -59,7 +59,7 @@ def shortestpath(graph,start,end,visited=[],distances={},predecessors={}):
 print(str(sys.argv[1]) + "," + str(sys.argv[2]))
 
 outFile = open(short, 'a')
-outFile.write( str(shortestpath(graph,eval(sys.argv[1]),eval(sys.argv[2]))) )
+outFile.write(str(shortestpath(graph,eval(sys.argv[1]),eval(sys.argv[2]))))
 outFile.write("\n")
 outFile.close()
 print('DONE')

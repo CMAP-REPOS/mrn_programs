@@ -24,7 +24,7 @@ goto end
 
 :badsas
 REM - SAS Executable Not Found
-@echo SAS Executable Not Found - Manually Update >>%4
+@echo SAS Executable Not Found at %saspath% - Manually Update >>%4
 goto last
 
 :end

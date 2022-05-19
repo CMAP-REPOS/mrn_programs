@@ -43,14 +43,14 @@ arcpy.OverwriteOutput = 1
 # Read Script Arguments
 # ---------------------------------------------------------------
 if arcpy.GetParameterAsText(0) == 'true':
-    moved_link_ends_only = 1
+    moved_link_ends = 1
 else:
-    moved_link_ends_only = 0
+    moved_link_ends = 0
 
 if arcpy.GetParameterAsText(1) == 'true':
-    split_links_only = 1
+    split_links = 1
 else:
-    split_links_only = 0
+    split_links = 0
 
 # ---------------------------------------------------------------
 # Local variables
@@ -93,7 +93,7 @@ fl = "update_nodes"                                   # SAS file name
 z = f + "/" + fl + ".sas"
 sas_log_file = c + "\\Temp\\" + fl + ".log"
 sas_list_file = d + "\\Temp\\" + fl + ".lst"
-cmd = [ bat, z, c, sas_log_file, sas_list_file ] 
+cmd = [ bat, z, c, sas_log_file, sas_list_file ]
 fl2 = "geometry_update"                               # SAS file name
 z2 = f + "/" + fl2 + ".sas"
 sas_log_file2 = c + "\\Temp\\" + fl2 + ".log"
@@ -102,7 +102,7 @@ fl3 = "verify_node_coords"
 z3 = f + "/" + fl3 + ".sas"
 sas_log_file3 = c + "\\Temp\\" + fl3 + ".log"
 sas_list_file3 = d + "\\Temp\\" + fl3 + ".lst"
- 
+
 # ---------------------------------------------------------------
 # Cleanup files if needed
 # ---------------------------------------------------------------
@@ -141,7 +141,7 @@ if os.path.exists(outFl):
 if os.path.exists(infl):
     os.remove(infl)
 if os.path.exists(outRtFl):
-    os.remove(outRtFl)    
+    os.remove(outRtFl)
 if os.path.exists(dropped_rtes):
     os.remove(dropped_rtes)
 
@@ -160,15 +160,6 @@ arcpy.AddXY_management(temp_arcstart_shp)
 arcpy.FeatureVerticesToPoints_management(railnet_arc, temp_arcend_shp, "END")
 arcpy.AddXY_management(temp_arcend_shp)
 
-if not split_links_only:
-    cmd3 = [ bat, z3, c, sas_log_file3, sas_list_file3 ]
-    subprocess.call(cmd3)
-    if os.path.exists(sas_list_file3):
-        arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file3)
-        arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file3)
-        arcpy.AddMessage("-------------------------------------------------------------------")
-        sys.exit([1])
-
 # ---------------------------------------------------------------
 # Make a Copy of Current Nodes and Run SAS to Process Changes
 # ---------------------------------------------------------------
@@ -181,15 +172,36 @@ if os.path.exists(sas_list_file):
     sys.exit([1])
 
 # ---------------------------------------------------------------
+# Verify node coordinates.
+# ---------------------------------------------------------------
+cmd3 = [ bat, z3, c, sas_log_file3, sas_list_file3 ]
+subprocess.call(cmd3)
+if os.path.exists(sas_list_file3):
+    arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file3)
+    arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file3)
+    arcpy.AddMessage("-------------------------------------------------------------------")
+    sys.exit([1])
+
+# ---------------------------------------------------------------
 # Update Node Feature Class Based on Changes
 # ---------------------------------------------------------------
 arcpy.AddMessage("---> Updating Node Feature Class")
 arcpy.MakeXYEventLayer_management(new_node_dbf, "point_x", "point_y", temp_node_Layer, "PROJCS['NAD_1927_StatePlane_Illinois_East_FIPS_1201',GEOGCS['GCS_North_American_1927',DATUM['D_North_American_1927',SPHEROID['Clarke_1866',6378206.4,294.9786982]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',-88.33333333333333],PARAMETER['Scale_Factor',0.999975],PARAMETER['Latitude_Of_Origin',36.66666666666666],UNIT['Foot_US',0.3048006096012192]];IsHighPrecision")
-arcpy.FeatureClassToFeatureClass_conversion(temp_node_Layer, mrn_gdb, "temp")
+
+fms = arcpy.FieldMappings()
+fms.addTable(temp_node_Layer)
+for i in ['pspace', 'pcost']:
+    fm = fms.getFieldMap(fms.findFieldMapIndex(i))
+    f_out = fm.outputField
+    f_out.type = 'SmallInteger'
+    fm.outputField = f_out
+    fms.replaceFieldMap(fms.findFieldMapIndex(i), fm)
+arcpy.FeatureClassToFeatureClass_conversion(temp_node_Layer, mrn_gdb, "temp", field_mapping=fms)
+
 arcpy.DeleteField_management(temp, ["point_x0", "point_y0"])
 arcpy.SelectLayerByAttribute_management(railnet_node, "CLEAR_SELECTION", "")
 arcpy.DeleteRows_management(railnet_node)
-arcpy.Append_management(temp, railnet_node, "TEST", "", "") 
+arcpy.Append_management(temp, railnet_node, "TEST", "", "")
 arcpy.Delete_management(temp)
 arcpy.FeatureClassToFeatureClass_conversion(railnet_node, mrn_gdb, "temp")
 arcpy.Delete_management(railnd)
@@ -200,7 +212,7 @@ arcpy.Delete_management(temp)
 # ---------------------------------------------------------------
 # Update Miles Value for Split Links and Assign Temporary
 # Node Values to Maintain Unique Anode-Bnode Combinations
-# ---------------------------------------------------------------   
+# ---------------------------------------------------------------
 if os.path.exists(new_mile_dbf):
     arcpy.AddMessage("---> Updating Miles Value for Split Links")
     arcpy.JoinField_management(railnet_arc, "OBJECTID", new_mile_dbf, "ORIG_FID", "newmile;tempa;tempb")
@@ -216,7 +228,7 @@ else:
 
 # ---------------------------------------------------------------
 # Rebuild Routes Using Arc Geometry
-# ---------------------------------------------------------------   
+# ---------------------------------------------------------------
 ## << Part 1: Write Arc Geometry to File >> ##
 arcpy.SelectLayerByAttribute_management(railnet_arc, "CLEAR_SELECTION", "")
 outFile = open(outFl, "w")
@@ -232,7 +244,7 @@ for row in arcpy.SearchCursor(railnet_arc):       # loop through rows (features)
                 pnt = part.next()
 
     f += 1
-    
+
 f -= 1
 arcpy.AddMessage("---> Geometry Written for " + str(f) + " Arcs")
 outFile.close()
@@ -278,7 +290,7 @@ for fc in fcs:
         f -= 1
         arcpy.AddMessage("---> Geometry Written for " + str(f) + " Future Routes")
         outFile.close()
-    
+
     ## Run SAS to Update Itineraries ##
     # -- finish set up to run SAS
     y2 = c + "$" + orig_itinerary_dbf + "$X$3$X$X$" + orig_future_routes_dbf
@@ -288,7 +300,7 @@ for fc in fcs:
         arcpy.AddMessage("---> SAS Processing Error!! Review the List File: " + sas_list_file2)
         arcpy.AddMessage("---> If there is an Errorlevel Message, Review the Log File: " + sas_log_file2)
         arcpy.AddMessage("-------------------------------------------------------------------")
-        sys.exit([1])                                      
+        sys.exit([1])
 
 
     ## << Part 3a: Create Routes with Updated Geometry >> ##
@@ -307,7 +319,7 @@ for fc in fcs:
             feat.shape = lineArray                               # set feature geometry to the array of points
             cur.insertRow(feat)                                  # insert the feature
             lineArray.removeAll()
-                
+
         lineArray.add(pnt)
         ID = pnt.ID
 
@@ -321,8 +333,8 @@ for fc in fcs:
 
     ## << Part 3b: Update Route Attributes Using Data in Rte_Updt.dbf >> ##
     ##      -- This is much faster than indexing and joining used in the previous version of the script. -- ##
-    blankcur = arcpy.UpdateCursor(railrt) 
-    datacur = arcpy.SearchCursor(rte_updt) 
+    blankcur = arcpy.UpdateCursor(railrt)
+    datacur = arcpy.SearchCursor(rte_updt)
     arcpy.AddMessage("---> Updating Rail Line Data")
     for d_row in datacur:
         b_row = blankcur.next()
@@ -336,12 +348,16 @@ for fc in fcs:
             b_row.SCENARIO = string.strip(d_row.getValue("scen1"))
             b_row.ACTION = d_row.getValue("action1")
             b_row.NOTES = d_row.getValue("notes1")
+            b_row.TOD = d_row.getValue("tod1")
+            b_row.TIP_ID = d_row.getValue("tipid1")
+            b_row.COMPLETION_YEAR = d_row.getValue("comp1")
+            b_row.RSP_ID = d_row.getValue("rspid1")
         elif fc in ("all_runs", "all_runs_base"):                                      # update variables unique to all_runs
             b_row.FEEDLINE = d_row.getValue("fdline")
             b_row.ROUTE_ID = d_row.getValue("r_id")
             b_row.LONGNAME = d_row.getValue("rln")
             b_row.DIRECTION = d_row.getValue("dir")
-            b_row.TERMINAL = d_row.getValue("term")            
+            b_row.TERMINAL = d_row.getValue("term")
             b_row.START = d_row.getValue("start")
             b_row.STRTHOUR = d_row.getValue("strthour")
             b_row.AM_SHARE = d_row.getValue("ampct")
@@ -354,14 +370,14 @@ for fc in fcs:
     arcpy.Delete_management(railrt)
     arcpy.FeatureClassToFeatureClass_conversion(test, railnet, fc)
     arcpy.Delete_management(test)
-    if os.path.exists(rte_updt_dbf):
-        arcpy.Delete_management(rte_updt_dbf, "DbaseTable")
-    if os.path.exists(test):
-        arcpy.Delete_management(test)
-    if os.path.exists(outRtFl):
-        os.remove(outRtFl)    
+    # if os.path.exists(rte_updt_dbf):
+    #     arcpy.Delete_management(rte_updt_dbf, "DbaseTable")
+    # if os.path.exists(test):
+    #     arcpy.Delete_management(test)
+    # if os.path.exists(outRtFl):
+    #     os.remove(outRtFl)
 
- 
+
     ## << Part 4: Update Itinerary Table >> ##
     if os.path.exists(new_segments_dbf):
         arcpy.AddMessage("---> Updating Rail Itinerary Coding")
@@ -371,13 +387,13 @@ for fc in fcs:
         arcpy.Delete_management(itinerary)
         arcpy.CopyRows_management(itinerary + "_temp_reset_oids", itinerary)
         arcpy.Delete_management(itinerary + "_temp_reset_oids")
-        
+
     else:
-        if moved_link_ends_only:
-            arcpy.AddMessage("---> NOTE: No changes were made to itinerary coding.")
-        else:
+        if os.path.exists(new_mile_dbf):
             arcpy.AddMessage("---> ERROR: Itinerary Coding Not Updated!!")
             sys.exit([1])
+        else:
+            arcpy.AddMessage("---> NOTE: No changes were made to itinerary coding.")
 
 
     ## << Part 5: Identify Routes Dropped From Geodatabase >> ##
@@ -386,43 +402,43 @@ for fc in fcs:
         arcpy.AddMessage("---> Review " + dropped_rtes + " to see the list of routes deleted from the geodatabase.")
         arcpy.AddMessage("---> This is Not an Error - Just Information.")
         arcpy.AddMessage("---> ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !")
-        
+
     i += 1
 
 # ---------------------------------------------------------------
 # Cleanup files
 # ---------------------------------------------------------------
-arcpy.AddMessage("---> Removing Temporary Files")
-if os.path.exists(temp_arcend_shp):
-    arcpy.Delete_management(temp_arcend_shp, "ShapeFile")
-if os.path.exists(temp_arcstart_shp):
-    arcpy.Delete_management(temp_arcstart_shp, "ShapeFile")
-if os.path.exists(temp_node_shp):
-    arcpy.Delete_management(temp_node_shp, "ShapeFile")
-if os.path.exists(temp_node_Layer):
-   arcpy.Delete_management(temp_node_Layer, "Layer")
-if os.path.exists(new_node_dbf):
-    arcpy.Delete_management(new_node_dbf, "DbaseTable")
-if os.path.exists(new_segments_dbf):
-    arcpy.Delete_management(new_segments_dbf, "DbaseTable")
-if os.path.exists(temp_route_shp):
-    arcpy.Delete_management(temp_route_shp, "ShapeFile")
-if os.path.exists(temp):
-    arcpy.Delete_management(temp)
-if os.path.exists(sas_list_file):
-   os.remove(sas_list_file)
-if os.path.exists(sas_list_file2):
-    os.remove(sas_list_file2)
-if os.path.exists(sas_list_file3):
-    os.remove(sas_list_file3)
-if os.path.exists(outFl):
-    os.remove(outFl)
-if os.path.exists(infl):
-    os.remove(infl)
-
-try:
-    arcpy.DeleteField_management(railnet_arc, "newmile;tempa;tempb")
-except:
-    print arcpy.GetMessages(2)
+# arcpy.AddMessage("---> Removing Temporary Files")
+# if os.path.exists(temp_arcend_shp):
+#     arcpy.Delete_management(temp_arcend_shp, "ShapeFile")
+# if os.path.exists(temp_arcstart_shp):
+#     arcpy.Delete_management(temp_arcstart_shp, "ShapeFile")
+# if os.path.exists(temp_node_shp):
+#     arcpy.Delete_management(temp_node_shp, "ShapeFile")
+# if os.path.exists(temp_node_Layer):
+#    arcpy.Delete_management(temp_node_Layer, "Layer")
+# if os.path.exists(new_node_dbf):
+#     arcpy.Delete_management(new_node_dbf, "DbaseTable")
+# if os.path.exists(new_segments_dbf):
+#     arcpy.Delete_management(new_segments_dbf, "DbaseTable")
+# if os.path.exists(temp_route_shp):
+#     arcpy.Delete_management(temp_route_shp, "ShapeFile")
+# if os.path.exists(temp):
+#     arcpy.Delete_management(temp)
+# if os.path.exists(sas_list_file):
+#    os.remove(sas_list_file)
+# if os.path.exists(sas_list_file2):
+#     os.remove(sas_list_file2)
+# if os.path.exists(sas_list_file3):
+#     os.remove(sas_list_file3)
+# if os.path.exists(outFl):
+#     os.remove(outFl)
+# if os.path.exists(infl):
+#     os.remove(infl)
+#
+# try:
+#     arcpy.DeleteField_management(railnet_arc, "newmile;tempa;tempb")
+# except:
+#     print arcpy.GetMessages(2)
 
 arcpy.Compact_management(mrn_gdb)  # Keep GDB's filesize minimized
