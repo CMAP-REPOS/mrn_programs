@@ -3,7 +3,7 @@
 
 -------------                                                             -------------
    PROGRAM APPLIES FUTURE RAIL CODING CHANGES TO ITINERARIES.  CALLED BY
-   CREATE_EMME_RAIL_FILES_GTFS.SAS.
+   GENERATE_RAIL_FILES.SAS.
 -------------                                                             -------------
 
    NRF 8/29/2017: Revised station consolidation processing to skip future itineraries that already have new station coded.
@@ -182,12 +182,22 @@ filename inrte "&inpath.\Temp\rte_out.txt";
 
         data limit(keep=tr_line); set rte3;
 
-        data itn3(keep=itin_a itin_b ln new); merge ftritin limit(in=hit); by tr_line;
+        data itn3(keep=itin_a itin_b ln new new_rate); merge ftritin limit(in=hit); by tr_line;
             if hit;
             length ln $3.;
             ln=substr(tr_line,1,3);
             new=layover;
-            proc sort; by ln itin_a itin_b;
+            c=count(dw_code,':');
+			if c>0 then c=c+1;
+            if c>0 then do;
+                do i=1 to c by 2;
+                    p1=scan(dw_code,i,':');
+                    d1=scan(dw_code,i+1,':');
+                    if find(p1,"&tod")>0 then new_rate=input(d1, 8.);
+                    end;
+               end;
+            else if c=0 then new_rate=input(dw_code, 8.);
+            proc sort; by ln itin_a itin_b;run;
 
         data __null__; merge ftritin rte3(in=hit); by tr_line;
             if hit;
@@ -208,12 +218,26 @@ filename inrte "&inpath.\Temp\rte_out.txt";
             if new>0 then output fix;
             else output itins;
 
+        proc summary nway data=fix;
+            class ln itin_a itin_b new new_rate;
+            output out=station_freq;
+            run;
+
+        data station_freq; set station_freq;
+		    stop_freq=round(_freq_ * new_rate);
+			stop_interval=round(_freq_/stop_freq);
+			run;
+
         * Insert new station into itinerary.;
-        data fix; set fix;
+        data fix; merge fix(in=hit) station_freq(drop=_type_ _freq_); by ln itin_a itin_b new;
             id=it_order;
             output;
             id=it_order+0.1;
-            output;
+            output;run;
+
+        data fix; set fix;
+		    group=ln||itin_a||itin_b||new;
+			run;
 
         data fix; set fix;
             if id=int(id) then do;
@@ -226,12 +250,36 @@ filename inrte "&inpath.\Temp\rte_out.txt";
                 itin_a=new;
                 end;
             trv_time=round(trv_time/2+0.5,0.1);  * Add 0.5 minutes on each side of new station;
+			proc sort; by group dep_time; run;
+
+        data fix; set fix;
+		    lag_group=lag(group);
+			run;
+
+        data fix; set fix;
+            retain f 0;
+			retain i 1;
+			if group ne lag_group then do;
+                f=0;
+				i=1;
+				end;
+			if itin_b=new & stop_freq>0 & f<stop_freq & i=stop_interval then do;
+			    dw_code=0;
+				dw_time=0.01;
+				f+1;
+				i=1;
+				end;
+			else if itin_b=new & stop_freq>0 & (f>=stop_freq | i ne stop_interval) then do;
+			    dw_code=1;
+				dw_time=0.00;
+				i+1;
+				end;run;
 
         data itins; set itins fix;
             proc sort; by tr_line it_order id;
 
-        data itins(drop=it_order new id ln); set itins;
-            group=lag(tr_line);
+        data itins(drop=it_order new id ln new_rate stop_freq stop_interval lag_group f i); set itins;
+            group=lag(tr_line);run;
 
         data itins; set itins;
             retain it_order 1;
