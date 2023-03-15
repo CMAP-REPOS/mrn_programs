@@ -34,8 +34,7 @@ ________________________________________________________________________________
 %let rtefile=%scan(&sysparm,3,$);       ***name of spreadsheet for importing new routes or GTFS route file (entire path);
 %let code=%scan(&sysparm,4,$);          ***choice flag for Section 3 processing;
 %let segfile=%scan(&sysparm,5,$);       ***name of GTFS segment file (entire path);
-%let use900=%scan(&sysparm,6,$);        ***use new station itinerary during GTFS import;
-%let origfrts=%scan(&sysparm,7,$);      ***original future routes .dbf file (entire path);
+%let origfrts=%scan(&sysparm,6,$);      ***original future routes .dbf file (entire path);
 
 
 %let tot=0;
@@ -340,9 +339,9 @@ run;
 
     %if &code=2 %then %do;  *** call block for GTFS rail coding ***;
         data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term
-                        start strthour ampct vehicle);
+                        start strthour ampct);
             retain newline descr mode type headway speed fdline r_id rln dir term start
-                  strthour ampct vehicle;
+                  strthour ampct;
             set route;
                 rename newline=line1 descr=desc1 mode=mode1 type=type1 headway=hdwy1
                       speed=speed1;
@@ -362,13 +361,13 @@ run;
         %end;
     %else %if &code=3 & %index(&origitin,all_runs) %then %do;
         data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term
-                        start strthour ampct ct_veh1);
+                        start strthour ampct);
             retain tr_line descriptio mode veh_type headway speed feedline route_id
-                  longname direction terminal start strthour am_share ct_veh;
+                  longname direction terminal start strthour am_share;
             set rt;
             rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1
                   speed=speed1 feedline=fdline route_id=r_id longname=rln direction=dir
-                  terminal=term am_share=ampct ct_veh=ct_veh1;
+                  terminal=term am_share=ampct;
         proc export data=route outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
         %end;
 

@@ -148,7 +148,7 @@ if os.path.exists(dropped_rtes):
 try:
     arcpy.DeleteField_management(railnet_arc, "newmile;tempa;tempb")
 except:
-    print arcpy.GetMessages(2)
+    print(arcpy.GetMessages(2))
 
 # ---------------------------------------------------------------
 # Convert Arc Ends to Points & Add Coordinates
@@ -293,7 +293,7 @@ for fc in fcs:
 
     ## Run SAS to Update Itineraries ##
     # -- finish set up to run SAS
-    y2 = c + "$" + orig_itinerary_dbf + "$X$3$X$X$" + orig_future_routes_dbf
+    y2 = c + "$" + orig_itinerary_dbf + "$X$3$X$" + orig_future_routes_dbf
     cmd2 = [ bat, z2, y2, sas_log_file2, sas_list_file2 ]
     subprocess.call(cmd2)
     if os.path.exists(sas_list_file2):
@@ -361,7 +361,7 @@ for fc in fcs:
             b_row.START = d_row.getValue("start")
             b_row.STRTHOUR = d_row.getValue("strthour")
             b_row.AM_SHARE = d_row.getValue("ampct")
-	    b_row.CT_VEH = d_row.getValue("ct_veh1")
+        b_row.CT_VEH = d_row.getValue("ct_veh1")
         blankcur.updateRow(b_row)
     del blankcur, datacur, b_row, d_row                             # delete cursor to remove data locks
 

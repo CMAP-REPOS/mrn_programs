@@ -50,7 +50,6 @@ param1 = arcpy.GetParameterAsText(1)  # future rail coding spreadsheet
 param2 = arcpy.GetParameterAsText(2)  # transit feed route file
 param3 = arcpy.GetParameterAsText(3)  # transit feed itinerary file
 param4 = arcpy.GetParameterAsText(4)  # feature class to update
-param5 = arcpy.GetParameterAsText(6)
 
 rail_routes = param4
 railrt = os.path.join(railnet, param4)
@@ -65,7 +64,7 @@ elif param2 != '' and param3 != '':
     arcpy.AddMessage("---> Transit Feed Input Route File is " + param2 +" ..." )
     arcpy.AddMessage("---> Transit Feed Input Itinerary File is " + param3 +" ..." )
     flag = "2"
-    y = mrndir + "$" + orig_itinerary_dbf + "$" + param2 + "$" + flag + "$" + param3 + "$" + param5  # SAS -sysparm parameters
+    y = mrndir + "$" + orig_itinerary_dbf + "$" + param2 + "$" + flag + "$" + param3  # SAS -sysparm parameters
 else:
     arcpy.AddMessage("---> You Must Enter the Appropriate Input File(s) to Run this Script!!!" )
     sys.exit([1])
@@ -222,7 +221,6 @@ if os.path.exists(rte_updt):
             b_row.START = d_row.getValue("start")
             b_row.STRTHOUR = d_row.getValue("strthour")
             b_row.AM_SHARE = d_row.getValue("ampct")
-            b_row.CT_VEH = d_row.getValue("vehicle")
 
         blankcur.updateRow(b_row)
 

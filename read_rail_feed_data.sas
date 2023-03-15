@@ -24,7 +24,6 @@ options noxwait;
 /*-------------------------------------------------------------*/
 filename in4 "&dir.\import\short_path.txt";
 filename out4 "&dir.\import\link_dictionary.txt";
-filename nwstatin "&dir.\ScenarioNetworkRail_forEmme\900\new_station_rail_itinerary.csv";
 /*-------------------------------------------------------------*/
 
 
@@ -259,35 +258,6 @@ data section; set a b c; proc sort; by newline order;
         *** VERIFY CODING ***;
 *-----------------------------------*;
 data verify; set section; proc sort; by itinerary_a itinerary_b;
-
-
-%macro newstationlinks;
-    
-    %if &use900='true' & %index(&origitin,all_runs_itin) %then %do;
-        
-        proc import out=nwstatin1 datafile=nwstatin dbms=csv replace; getnames=yes; guessingrows=15000;
-        data nwstalnks(keep=itin_a itin_b); set nwstatin1;
-        proc sort data=nwstalnks nodupkey; by itin_a itin_b;
-        
-        proc sort data=mi; by itin_a itin_b;
-        data mhn(rename=(miles=mhnmi itin_a=itinerary_a itin_b=itinerary_b)); merge nwstalnks(in=hit1) mi(in=hit2); by itin_a itin_b;
-            if hit1 and hit2;
-            match=1;
-            base=1;
-        proc sort; by itinerary_a itinerary_b;
-    %end;
-    %else %do;
-        data mhn(rename=(miles=mhnmi itin_a=itinerary_a itin_b=itinerary_b)); set mi;
-            match=1;
-            base=1;
-        proc sort; by itinerary_a itinerary_b;
-    %end;
-
-%mend newstationlinks;
-%newstationlinks
-run;
-
-
 data verify; merge verify (in=hit) mhn; by itinerary_a itinerary_b; if hit;
 
 ** Hold Segments that Do Not Match MHN Links or are the Wrong Direction **;
