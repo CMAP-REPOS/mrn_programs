@@ -28,7 +28,6 @@ ________________________________________________________________________________
 %let inpath=%scan(&sysparm,1,$);
 %let outpath=%scan(&sysparm,2,$);
 %let sc=%scan(&sysparm,3,$);
-%let ct_ramp=%scan(&sysparm,4,$);
 %let scen=%eval(&sc/100);
 %let reportpath=&outpath.\&scen.00\rail_changes.txt;
 %let maxzone=3649;  * Highest zone17 POE zone number.;
@@ -134,15 +133,6 @@ PROCESS TIME-OF-DAY NETWORKS
 */
 
 %macro getdata;
-
-    %if &ct_ramp=1 %then %do;
-
-        data routes1(drop=ct_veh); set routes1;
-            veh_type=ct_veh;  * Set expanded vehicle types for CT-RAMP.;
-        * Add for future service;
-        
-        %end;
-
     /*
     *** Old transit TODs (C21Q4 and earlier);
     %do %while (&counter le 9);
@@ -364,12 +354,6 @@ PROCESS TIME-OF-DAY NETWORKS
             else do;
                 put +4 itin_a +(7-length(left(trim(itin_a)))) d +(10-length(left(trim(d)))) 'ttf=1' +2 'us1=' +0 trv_time +(6-length(left(trim(trv_time)))) 'us2=' +0 zn_fare;
                 end;
-
-        %if &scen=9 %then %do;
-
-            proc export data=combine outfile="&outpath.\&scen.00\rail_itinerary_&tod..dbf" dbms=dbf replace;
-
-            %end;
 
         * UPDATE LINK INFORMATION.;
         data network1(drop=modes2 c); set network;

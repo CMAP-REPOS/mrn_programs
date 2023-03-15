@@ -56,13 +56,8 @@ if os.path.exists(transitdir):
 else:
     os.mkdir(transitdir)
     outdir = transitdir
-bool = arcpy.GetParameterAsText(3)
-if bool == "true":
-    ct_ramp = "1"
-else:
-    ct_ramp = "0"
+
 arcpy.AddMessage("---> gdb is " + gdb)
-arcpy.AddMessage("---> ct_ramp is " + ct_ramp)
 
 # Set local variables.
 progdir = os.path.dirname(__file__)
@@ -101,7 +96,7 @@ for scenario in scen_list:
     bat = os.path.join(progdir, 'sasrun.bat')  # Batch file.
     sas_name = 'generate_rail_files'  # SAS file name.
     sas = os.path.join(progdir, sas_name + '.sas')
-    sas_args = mrndir + "$" + outdir + "$" + scenario + "$" + ct_ramp
+    sas_args = mrndir + "$" + outdir + "$" + scenario
     sas_log = os.path.join(temp, sas_name + '.log')
     sas_lst = os.path.join(temp, sas_name + '.lst')
     cmd = [bat, sas, sas_args, sas_log, sas_lst]
