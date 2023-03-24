@@ -9,7 +9,7 @@ The scripts in this repository are used to import new GTFS rail data, maintain t
 1. Clone or download the mrn_programs repository to a local directory.
 2. Copy the MRN geodatabase to the same local directory.
 3. Copy the MRN Editor map document to the same local directory.
-4. Open the MRN Editor to use the Master Rail Network Tools.
+4. Open the MRN Editor to use the [Master Rail Network Tools](https://github.com/CMAP-REPOS/mrn_programs/wiki/Master-Rail-Network-Tools).
 
 Sample directory structure:
 ```
