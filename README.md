@@ -11,8 +11,10 @@ The scripts in this repository are used to import new GTFS rail data, maintain t
 3. Copy the MRN Editor map document to the same local directory.
 4. Open the MRN Editor to use the Master Rail Network Tools.
 
-Sample directory structure:  
+Sample directory structure:
+```
 └── MRN/  
     ├── mrn.gdb/  
     ├── mrn_programs/  
     └── mrn_editor.mxd
+```
