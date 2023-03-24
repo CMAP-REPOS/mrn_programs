@@ -12,7 +12,7 @@ The scripts in this repository are used to import new GTFS rail data, maintain t
 4. Open the MRN Editor to use the Master Rail Network Tools.
 
 Sample directory structure:  
-├── MRN  
-│   ├── mrn.gdb  
-│   ├── mrn_programs  
-│   ├── mrn_editor.mxd
+└── MRN/  
+    ├── mrn.gdb/  
+    ├── mrn_programs/  
+    └── mrn_editor.mxd
