@@ -50,9 +50,10 @@ proc import out=rte datafile="&rtefile" dbms=xlsx replace;
     sheet="header";
     getnames=yes;
     run;
-data rte(drop=TOD SCENARIO rename=(TOD1=TOD SCENARIO1=SCENARIO)); set rte;
+data rte(drop=TOD SCENARIO RSP_ID rename=(TOD1=TOD SCENARIO1=SCENARIO RSP_ID1=RSP_ID)); set rte;
     TOD1=left(put(TOD,10.));
     SCENARIO1=left(put(SCENARIO,10.));
+    RSP_ID1=left(put(RSP_ID, 3.));
     run;
 
 data rte(drop=i); set rte(where=(tr_line is not null & action>=1));
@@ -67,13 +68,14 @@ data rte(drop=i); set rte(where=(tr_line is not null & action>=1));
 data action(keep=tr_line action); set rte;
 
 data section; merge section action; by tr_line;
+
 data section(drop=layover i); set section(where=(tr_line is not null & order=int(order)));
  length lo $8.;
     array zero(*) _numeric_;
       do i=1 to dim(zero);
        if zero(i)=. then zero(i)=0;
       end;
-  if dw_code=1 then dw_time=0; else dw_time=0.01;
+  if dw_code='1' then dw_time=0; else dw_time=0.01;
   trv_time=round(trv_time,.1);
   group=lag(tr_line);
   if layover>0 then lo=put(layover,8.0); else lo='';
@@ -95,7 +97,7 @@ data check; merge ver1 (in=hit) mi; by itin_a itin_b; if hit;
      title 'MIS-CODED ANODE-BNODE OR DIRECTIONAL PROBLEM ON THESE LINKS';
 
   *** VERIFY ITINERARY CODING APPROPRIATE FOR ACTION CODE ***;
-data ver1; set verify(where=(action=1 & ((itin_b>38999 & itin_b<40000) | (itin_b>48999 & itin_b<50000)) & dw_code=0));
+data ver1; set verify(where=(action=1 & ((itin_b>38999 & itin_b<40000) | (itin_b>48999 & itin_b<50000)) & dw_code='0'));
    proc print; title 'BAD DWELL CODE AT JUNCTION FOR ACTION=1';
 
 data ver2; set verify(where=(action=2 & trv_time=0));

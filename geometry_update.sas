@@ -94,10 +94,10 @@ data mi(keep=itin_a itin_b miles); set arcs; proc sort nodupkey; by itin_a itin_
         proc import datafile="&origitin" dbms=dbf out=sec replace;
         proc sort data=sec; by tr_line;
 
-
         proc import datafile="&dir.\Temp\temp_route.dbf" dbms=dbf out=rt replace;
         proc sort data=rt; by tr_line;
-
+        data rt(rename=(DESCRIPTIO=DESCRIPTION COMPLETION=COMPLETION_YEAR)); set rt;
+            run;
 
         %macro goodrte;
             %if &code=1 %then %do;
@@ -163,7 +163,7 @@ run;
 
 %macro choice;
 
-  %if &code=1 %then %do; %include "&dir.\mrn_programs\read_rail_spreadsheet_Apr2012.sas"; %end;    *** call program to import & format spreadsheet rail coding ***;
+  %if &code=1 %then %do; %include "&dir.\mrn_programs\read_rail_coding_spreadsheet.sas"; %end;    *** call program to import & format spreadsheet rail coding ***;
   %if &code=2 %then %do; %include "&dir.\mrn_programs\read_rail_feed_data.sas"; %end;              *** call program to import & format GTFS rail coding ***;
   %if &code=3 %then %do; %include "&dir.\mrn_programs\itinerary_node_update_Aug2012.sas"; %end;    *** call program to insert split-link updates into itineraries ***;
 
@@ -221,7 +221,7 @@ run;
              if action=5 then do; layover=orig_lo; order=it_order; end;
              else order=0;
 
-            proc summary nway; class tr_line itin_a itin_b; id layover;
+            proc summary nway; class tr_line itin_a itin_b dw_code; id layover;
                output out=s2b min(f_meas)= max(t_meas)= sum(order)=it_order mean(trv_time)=;
           data s1(drop=_type_ _freq_ orig_a orig_b orig_lo action group order); set good s1 s2b; proc sort; by tr_line f_meas;
           proc export data=s1 outfile="&dir.\Temp\new_segments.dbf" dbms=dbf replace;
@@ -338,33 +338,41 @@ run;
 
 %macro rtes;
 
-  %if &code=2 %then %do;                                                                       *** call block for GTFS rail coding ***;
-      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct vehicle);
-          retain newline descr mode type headway speed fdline r_id rln dir term start strthour ampct vehicle;
-	  set route;
-          rename newline=line1 descr=desc1 mode=mode1 type=type1 headway=hdwy1 speed=speed1;
-      proc export data=route outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
-  %end;
-  %else %if &code=1 | (&code=3 & %index(&origitin,future)) %then %do;                                                                                   *** call block for future rail coding ***;
-      data rt(drop=shape_leng);
-	  set rt;
-	  id=_n_;
-	  if descriptio='' then descriptio=description;
-          rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 tod=tod1 scenario=scen1 action=action1 notes=notes1 tip_id=tipid1 completion=comp1 rsp_id=rspid1;
-      data rt;
-	  set rt;
-	  keep line1 desc1 mode1 type1 hdwy1 speed1 tod1 scen1 action1 notes1 tipid1 comp1 rspid1 id;
-      proc export data=rt outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
-  %end;
-  %else %if &code=3 & %index(&origitin,all_runs) %then %do;
-      data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term start strthour ampct ct_veh1);
-          retain tr_line descriptio mode veh_type headway speed feedline route_id longname direction terminal start strthour am_share ct_veh;
-	  set rt;
-          rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1 speed=speed1 feedline=fdline route_id=r_id longname=rln direction=dir terminal=term am_share=ampct ct_veh=ct_veh1;
-      proc export data=route outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
-  %end;
+    %if &code=2 %then %do;  *** call block for GTFS rail coding ***;
+        data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term
+                        start strthour ampct vehicle);
+            retain newline descr mode type headway speed fdline r_id rln dir term start
+                  strthour ampct vehicle;
+            set route;
+                rename newline=line1 descr=desc1 mode=mode1 type=type1 headway=hdwy1
+                      speed=speed1;
+        proc export data=route outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
+        %end;
+    %else %if &code=1 | (&code=3 & %index(&origitin,future)) %then %do;  *** call block for future rail coding ***;
+        data rt(drop=shape_leng); set rt;
+            id=_n_;
+            /*if descriptio='' then descriptio=description;*/
+            rename tr_line=line1 description=desc1 mode=mode1 veh_type=type1
+                   headway=hdwy1 speed=speed1 tod=tod1 scenario=scen1 action=action1
+                   tip_id=tipid1 rsp_id=rspid1 completion_year=comp1 notes=notes1;
+        data rt; set rt;
+            keep line1 desc1 mode1 type1 hdwy1 speed1 tod1 scen1 action1 tipid1 rspid1
+                comp1 notes1 id;
+        proc export data=rt outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
+        %end;
+    %else %if &code=3 & %index(&origitin,all_runs) %then %do;
+        data route(keep=line1 desc1 mode1 type1 hdwy1 speed1 fdline r_id rln dir term
+                        start strthour ampct ct_veh1);
+            retain tr_line descriptio mode veh_type headway speed feedline route_id
+                  longname direction terminal start strthour am_share ct_veh;
+            set rt;
+            rename tr_line=line1 descriptio=desc1 mode=mode1 veh_type=type1 headway=hdwy1
+                  speed=speed1 feedline=fdline route_id=r_id longname=rln direction=dir
+                  terminal=term am_share=ampct ct_veh=ct_veh1;
+        proc export data=route outfile="&dir.\Temp\rte_updt.dbf" dbms=dbf replace;
+        %end;
 
-%mend rtes;
+    %mend rtes;
 %rtes
-  /* end macro */
+/* end macro */
 run;

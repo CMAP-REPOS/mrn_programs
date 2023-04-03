@@ -1,4 +1,4 @@
-/* CREATE_EMME_RAIL_FILES_GTFS.SAS
+/* GENERATE_RAIL_FILES.SAS
     Craig Heither & Nick Ferguson, last rev. 02/01/2016
 
 -------------                                                             -------------
@@ -50,6 +50,10 @@ proc import datafile="&inpath.\Temp\scen_itin.dbf" out=itins1 replace;
 
 proc sort data=itins1; by tr_line;
 
+data itins1(drop=DW_CODE rename=(DW_CODE1=DW_CODE)); set itins1;
+    DW_CODE1=left(put(DW_CODE, 25.));
+    run;
+
 * READ IN NODE INFORMATION;
 proc import datafile="&inpath.\Temp\temp_rlnode_zone.dbf" out=nodes replace;
 
@@ -84,7 +88,10 @@ READ IN FUTURE CODING DATA FOR SCENARIOS 200 - 700
 */
 
 %macro future;
-
+    /*
+    Do not skip this block for the base scenario until 'all_runs_base'
+    has been updated to 2019.
+    */
     /*%if &sc>&basescen %then %do;*/
 
         proc import datafile="&inpath.\Temp\temp_route_ftr.dbf" out=ftrrte replace;  * Future routes, limited to specified scenario;
@@ -216,7 +223,7 @@ PROCESS TIME-OF-DAY NETWORKS
             if hit1 & hit2;
             if layover='' then layover='0';
             l=input(layover,best4.);
-            if dw_code=1 then dw_time=0;
+            if dw_code='1' then dw_time=0;
             else dw_time=0.01;
 
         * If applicable, process future route action codes;
@@ -311,7 +318,7 @@ PROCESS TIME-OF-DAY NETWORKS
         proc sort; by tr_line it_order;
 
         * VERIFY THAT ITINERARIES DO NOT STOP AT JUNCTIONS.;
-        data check; set combine(where=(((itin_b>39000 & itin_b<40000) | (itin_b>49000 & itin_b<50000)) & dw_code=0));
+        data check; set combine(where=(((itin_b>39000 & itin_b<40000) | (itin_b>49000 & itin_b<50000)) & dw_code='0'));
 
         proc print;
             title "NETWORK &scen.00 ITINERARY SEGMENTS THAT STOP AT A JUNCTION";
@@ -322,11 +329,11 @@ PROCESS TIME-OF-DAY NETWORKS
             tr_line=substr(tr_line,1,6);
             name="'"||compress(tr_line)||"'";
             desc="'"||ds||"'";
-            if dw_code=1 then d=compress('dwt=#'||dw_time);
-            else if dw_code=2 then d=compress('dwt=>'||dw_time);
-            else if dw_code=3 then d=compress('dwt=<'||dw_time);
-            else if dw_code=4 then d=compress('dwt=+'||dw_time);
-            else if dw_code=5 then d=compress('dwt=*'||dw_time);
+            if dw_code='1' then d=compress('dwt=#'||dw_time);
+            else if dw_code='2' then d=compress('dwt=>'||dw_time);
+            else if dw_code='3' then d=compress('dwt=<'||dw_time);
+            else if dw_code='4' then d=compress('dwt=+'||dw_time);
+            else if dw_code='5' then d=compress('dwt=*'||dw_time);
             else d=compress('dwt='||dw_time);
             file out1;
             if _n_=1 then do;
