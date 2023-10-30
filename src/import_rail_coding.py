@@ -213,6 +213,12 @@ if os.path.exists(rte_updt):
             else:
                 b_row.COMPLETION_YEAR = d_row.getValue("comp1")
             b_row.NOTES = d_row.getValue("notes1")
+            b_row.TIP_ID = d_row.getValue("tipid1")
+            if d_row.getValue("comp1") == 0:
+                b_row.COMPLETION_YEAR = None
+            else:
+                b_row.COMPLETION_YEAR = d_row.getValue("comp1")
+            b_row.RSP_ID = d_row.getValue("rspid1")
         elif flag == "2":                                        # update variables unique to all_runs
             b_row.FEEDLINE = d_row.getValue("fdline")
             b_row.ROUTE_ID = d_row.getValue("r_id")
