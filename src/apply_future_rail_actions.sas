@@ -431,9 +431,11 @@ filename inrte "&inpath.\rte_out.txt";
             put "--> " descr ": extended " ln;
 
         data _null_; set rte4 nobs=totobs;
-            call symput('total',left(put(totobs,8.)));  * Store number of future lines;
+            
+        call symput('total',left(put(totobs,8.)));  * Store number of future lines;
+        run;
 
-       %do %while (&count le &total);  * Loop through future routes coded;
+        %do %while (&count le &total);  * Loop through future routes coded;
 
             data limit(keep=tr_line); set rte4(where=(id=&count));
 
@@ -489,7 +491,9 @@ filename inrte "&inpath.\rte_out.txt";
             %let cnter=1;
 
             data _null_; set cntl nobs=totobs;
-                call symput('cntl',left(put(totobs,8.)));  * Store number of control lines;
+                
+            call symput('cntl',left(put(totobs,8.)));  * Store number of control lines;
+            run;
 
             * Loop through Control Routes and add extension to beginning/end as appropriate.;
             %do %while (&cnter le &cntl);
