@@ -50,6 +50,7 @@ arcpy.OverwriteOutput = 1
 gdb = arcpy.GetParameterAsText(0)
 scen_list = arcpy.GetParameterAsText(1).split(';')
 outdir = arcpy.GetParameterAsText(2)
+rcp_id = arcpy.GetParameterAsText(3)
 transitdir = os.path.join(outdir, 'transit')
 if os.path.exists(transitdir):
     outdir = transitdir
@@ -95,7 +96,7 @@ for scenario in scen_list:
     bat = os.path.join(srcdir, 'sasrun.bat')  # Batch file.
     sas_name = 'generate_rail_files'  # SAS file name.
     sas = os.path.join(srcdir, sas_name + '.sas')
-    sas_args = srcdir + "$" + tempdir + "$" + outdir + "$" + scenario
+    sas_args = srcdir + "$" + tempdir + "$" + outdir + "$" + scenario + "$" + rcp_id
     sas_log = os.path.join(tempdir, sas_name + '.log')
     sas_lst = os.path.join(tempdir, sas_name + '.lst')
     cmd = [bat, sas, sas_args, sas_log, sas_lst]

@@ -29,6 +29,7 @@ ________________________________________________________________________________
 %let inpath=%scan(&sysparm,2,$);
 %let outpath=%scan(&sysparm,3,$);
 %let sc=%scan(&sysparm,4,$);
+%let rcpid=%scan(&sysparm,5,$);
 %let scen=%eval(&sc/100);
 %let reportpath=&outpath.\&scen.00\rail_changes.txt;
 %let maxzone=3649;  * Highest zone17 POE zone number.;
@@ -96,7 +97,9 @@ READ IN FUTURE CODING DATA FOR SCENARIOS 200 - 700
 
         proc import datafile="&inpath.\temp_route_ftr.dbf" out=ftrrte replace;  * Future routes, limited to specified scenario;
 
-        data ftrrte(rename=(descriptio=descr)); set ftrrte(where=(scenario ? "&scen"));
+        /*data ftrrte(rename=(descriptio=descr)); set ftrrte(where=(scenario ? "&scen"));*/
+		/*data ftrrte(rename=(descriptio=descr)); set ftrrte(where=(RCPnoBuild=1));*/
+		data ftrrte(rename=(descriptio=descr)); set ftrrte(where=(RCPnoBuild=1 or RCP_ID="&rcpid"));
             length actcode$2.;
             actcode=compress('a'||action);
             it_order=0;
@@ -326,6 +329,7 @@ PROCESS TIME-OF-DAY NETWORKS
             else if dw_code='4' then d=compress('dwt=+'||dw_time);
             else if dw_code='5' then d=compress('dwt=*'||dw_time);
             else d=compress('dwt='||dw_time);
+			trv_time=round(trv_time, .01);
             file out1;
             if _n_=1 then do;
                 put "c RAIL TRANSIT BATCHIN FILE FOR SCENARIO &scen.00 TOD &tod" /
@@ -538,7 +542,8 @@ PROCESS TIME-OF-DAY NETWORKS
         */
 
         * CREATE SUMMARY FOR TOD PERIODS 2 & 4;
-        %if &tod=2 or &tod=4 %then %do;
+        /* %if &tod=2 or &tod=4 %then %do;*/
+		%if &tod=1 or &tod=2 or &tod=3 or &tod=4 %then %do;
 
             * NUMBER OF RUNS.;
             data cta metra; set combine;
@@ -554,12 +559,32 @@ PROCESS TIME-OF-DAY NETWORKS
                 *** Old transit TODs (C21Q4 and earlier);
                 * c_runs=120/headway;
 
-                if &tod=2 then c_runs=180/headway;
+				if &tod=1 then c_runs=720/headway;
+                else if &tod=2 then c_runs=180/headway;
+				else if &tod=3 then c_runs=420/headway;
                 else if &tod=4 then c_runs=120/headway;
 
-            data metra_runs(keep=tr_line mode longname); set metra;
+            /*data metra_runs(keep=tr_line mode longname); set metra; run;*/
+			data metra_runs(keep=tr_line mode headway longname); set metra; run;
+
+			/*proc export data=metra
+			outfile="D:\MRN\test\mrn_programs-develop\temp\metra&tod..csv"
+			dbms=csv;
+			run;*/
+			
+			/*proc export data=metra_runs
+			outfile="D:\MRN\test\mrn_programs-develop\temp\metra_runs&tod..csv"
+			dbms=csv;
+			run;*/
+			
 
             proc sort data=metra_runs nodupkey; by tr_line;
+
+			data metra_runs; set metra_runs;
+				if &tod=1 then m_runs=720/headway;
+                else if &tod=2 then m_runs=180/headway;
+				else if &tod=3 then m_runs=420/headway;
+                else if &tod=4 then m_runs=120/headway;
 
             proc sql;
                 create table c_run_sum as
@@ -569,7 +594,8 @@ PROCESS TIME-OF-DAY NETWORKS
 
             proc sql;
                 create table m_run_sum as
-                select mode, longname, count(tr_line) as runs
+                /*select mode, longname, count(tr_line) as runs*/
+				select mode, longname, sum(m_runs) as runs
                 from metra_runs
                 group by mode, longname;
 
